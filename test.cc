@@ -1,11 +1,7 @@
-#define _ITERATOR_DEBUG_LEVEL 0
-
 #include <iostream>
 #include <functional>
 #include <chrono>
 #include <thread>
-
-#define WEBRTC_WIN
 
 #include "api/create_peerconnection_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
@@ -40,7 +36,7 @@ class CreateSessionDescriptionObserver : public webrtc::CreateSessionDescription
  public:
   CreateSessionDescriptionObserver(void *sender, std::function<void(void *, const char *, char *)> success, std::function<void(void *, const char *)> error) : sender_(sender), success_(success), error_(error) { }
 
-  void OnSuccess(webrtc::SessionDescriptionInterface *desc) {
+  void OnSuccess(webrtc::SessionDescriptionInterface *desc) override {
     std::string out;
     desc->ToString(&out);
 
@@ -53,11 +49,11 @@ class CreateSessionDescriptionObserver : public webrtc::CreateSessionDescription
     error_(sender_, err.message());
   }
 
-  void AddRef() const {
+  void AddRef() const override {
     ref_count_++;
   }
 
-  rtc::RefCountReleaseStatus Release() const {
+  rtc::RefCountReleaseStatus Release() const override {
     ref_count_--;
     if (ref_count_ == 0) {
       delete this;
@@ -78,7 +74,7 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
  public:
   SetSessionDescriptionObserver(void *sender, std::function<void(void *)> success, std::function<void(void *, const char *)> error) : sender_(sender), success_(success), error_(error) { }
 
-  void OnSuccess() {
+  void OnSuccess() override {
     success_(sender_);
   }
 
@@ -86,11 +82,11 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
     error_(sender_, err.message());
   }
 
-  void AddRef() const {
+  void AddRef() const override {
     ref_count_++;
   }
 
-  rtc::RefCountReleaseStatus Release() const {
+  rtc::RefCountReleaseStatus Release() const override {
     ref_count_--;
     if (ref_count_ == 0) {
       delete this;

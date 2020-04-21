@@ -34,17 +34,20 @@ unsafe extern fn set_session_description_observer_failure(sender: SetSessionDesc
   boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string()));
 }
 
-#[link(name = "build/Debug/test", kind = "static")]
-#[link(name = "deps/webrtc/out/Default/obj/webrtc", kind = "static")]
-#[link(name = "deps/webrtc/out/Default/obj/pc/peerconnection", kind = "static")]
+// #[link(name = "build/Debug/test", kind = "static")]
+// #[link(name = "deps/webrtc/out/Default/obj/webrtc", kind = "static")]
+// #[link(name = "deps/webrtc/out/Default/obj/pc/peerconnection", kind = "static")]
 
-#[link(name = "dmoguids", kind = "static")]
-#[link(name = "msdmo", kind = "static")]
-#[link(name = "secur32", kind = "static")]
-#[link(name = "winmm", kind = "static")]
-#[link(name = "wmcodecdspuuid", kind = "static")]
-#[link(name = "ws2_32", kind = "static")]
-#[link(name = "MSVCRTD", kind = "static")]
+// #[link(name = "dmoguids", kind = "static")]
+// #[link(name = "msdmo", kind = "static")]
+// #[link(name = "secur32", kind = "static")]
+// #[link(name = "winmm", kind = "static")]
+// #[link(name = "wmcodecdspuuid", kind = "static")]
+// #[link(name = "ws2_32", kind = "static")]
+// #[link(name = "MSVCRTD", kind = "static")]
+
+#[link(name = "webrtc-rs")]
+
 
 extern {
   fn create_peer_connection_factory() -> *mut c_void;
@@ -56,9 +59,21 @@ extern {
   fn create_peer_connection(factory: *mut c_void, config: *mut c_void) -> *mut c_void;
   fn release_peer_connection(peer: *mut c_void);
 
-  fn peer_connection_create_offer(peer: *mut c_void, sender: CreateSessionDescriptionObserverSender, success: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char, *mut u8), error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char));
+  fn peer_connection_create_offer(
+    peer: *mut c_void,
+    sender: CreateSessionDescriptionObserverSender,
+    success: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char, *mut u8),
+    error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char)
+  );
 
-  fn peer_connection_set_local_description(peer: *mut c_void, type_str: *mut c_char, sdp: *mut c_char, sender: SetSessionDescriptionObserverSender, success: unsafe extern fn(SetSessionDescriptionObserverSender), error: unsafe extern fn(SetSessionDescriptionObserverSender, *const c_char));
+  fn peer_connection_set_local_description(
+    peer: *mut c_void,
+    type_str: *mut c_char,
+    sdp: *mut c_char,
+    sender: SetSessionDescriptionObserverSender,
+    success: unsafe extern fn(SetSessionDescriptionObserverSender),
+    error: unsafe extern fn(SetSessionDescriptionObserverSender, *const c_char)
+  );
 }
 
 pub struct PeerConnection {
@@ -164,5 +179,5 @@ async fn main() {
   //   // release_peer_connection_factory(factory);
   // }
 
-  println!(":)");
+  println!(":):");
 }
