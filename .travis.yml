@@ -12,7 +12,7 @@ jobs:
     - rust: nightly
   fast_finish: true
 install:
-  - python tools/build.py build
+  - travis_wait 60 python tools/build.py build
   - cargo build -vv
 script:
   - cargo run
