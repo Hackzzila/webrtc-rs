@@ -18,7 +18,7 @@ except ImportError:
     from urllib import urlretrieve
     from urllib2 import urlopen, Request
 
-DEPOT_TOOLS_WIN = 'https://storage.googleapis.com/chrome-infra/depot_tools.zip'
+DEPOT_TOOLS_WIN = 'http://storage.googleapis.com/chrome-infra/depot_tools.zip'
 DEPOT_TOOLS_REPO = 'https://chromium.googlesource.com/chromium/tools/depot_tools.git'
 DEPOT_TOOLS_DEST = 'deps/depot_tools'
 
