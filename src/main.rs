@@ -16,7 +16,7 @@ unsafe extern fn create_session_description_observer_success(sender: CreateSessi
   let boxed = Box::from_raw(sender);
   boxed.send(Ok((CStr::from_ptr(type_str).to_str().unwrap().to_string(), string.to_string().clone())));
 
-  libc::free(sdp as *mut c_void);
+  webrtc_rs_free(sdp as *mut c_void);
 }
 
 unsafe extern fn create_session_description_observer_failure(sender: CreateSessionDescriptionObserverSender, err: *const c_char) {
@@ -34,39 +34,27 @@ unsafe extern fn set_session_description_observer_failure(sender: SetSessionDesc
   boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string()));
 }
 
-// #[link(name = "build/Debug/test", kind = "static")]
-// #[link(name = "deps/webrtc/out/Default/obj/webrtc", kind = "static")]
-// #[link(name = "deps/webrtc/out/Default/obj/pc/peerconnection", kind = "static")]
-
-// #[link(name = "dmoguids", kind = "static")]
-// #[link(name = "msdmo", kind = "static")]
-// #[link(name = "secur32", kind = "static")]
-// #[link(name = "winmm", kind = "static")]
-// #[link(name = "wmcodecdspuuid", kind = "static")]
-// #[link(name = "ws2_32", kind = "static")]
-// #[link(name = "MSVCRTD", kind = "static")]
-
 #[link(name = "webrtc-rs")]
-
-
 extern {
-  fn create_peer_connection_factory() -> *mut c_void;
-  fn release_peer_connection_factory(factory: *mut c_void);
+  fn webrtc_rs_free(ptr: *mut c_void);
 
-  fn create_rtc_configuration() -> *mut c_void;
-  fn delete_rtc_configuration(config: *mut c_void);
+  fn webrtc_rs_create_peer_connection_factory() -> *mut c_void;
+  fn webrtc_rs_release_peer_connection_factory(factory: *mut c_void);
 
-  fn create_peer_connection(factory: *mut c_void, config: *mut c_void) -> *mut c_void;
-  fn release_peer_connection(peer: *mut c_void);
+  fn webrtc_rs_create_rtc_configuration() -> *mut c_void;
+  fn webrtc_rs_delete_rtc_configuration(config: *mut c_void);
 
-  fn peer_connection_create_offer(
+  fn webrtc_rs_create_peer_connection(factory: *mut c_void, config: *mut c_void) -> *mut c_void;
+  fn webrtc_rs_release_peer_connection(peer: *mut c_void);
+
+  fn webrtc_rs_peer_connection_create_offer(
     peer: *mut c_void,
     sender: CreateSessionDescriptionObserverSender,
     success: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char, *mut u8),
     error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char)
   );
 
-  fn peer_connection_set_local_description(
+  fn webrtc_rs_peer_connection_set_local_description(
     peer: *mut c_void,
     type_str: *mut c_char,
     sdp: *mut c_char,
@@ -90,7 +78,7 @@ impl PeerConnection {
     let boxed = Box::new(tx);
 
     unsafe {
-      peer_connection_create_offer(self.ptr, Box::into_raw(boxed), create_session_description_observer_success, create_session_description_observer_failure);
+      webrtc_rs_peer_connection_create_offer(self.ptr, Box::into_raw(boxed), create_session_description_observer_success, create_session_description_observer_failure);
     }
 
     match rx.await {
@@ -107,7 +95,7 @@ impl PeerConnection {
       let type_cstr = CString::new(type_str).unwrap();
       let sdp_cstr = CString::new(sdp).unwrap();
 
-      peer_connection_set_local_description(self.ptr, type_cstr.into_raw(), sdp_cstr.into_raw(), Box::into_raw(boxed), set_session_description_observer_success, set_session_description_observer_failure);
+      webrtc_rs_peer_connection_set_local_description(self.ptr, type_cstr.into_raw(), sdp_cstr.into_raw(), Box::into_raw(boxed), set_session_description_observer_success, set_session_description_observer_failure);
     }
 
     match rx.await {
@@ -120,7 +108,7 @@ impl PeerConnection {
 impl Drop for PeerConnection {
   fn drop(&mut self) {
     unsafe {
-      release_peer_connection(self.ptr);
+      webrtc_rs_release_peer_connection(self.ptr);
     }
   }
 }
@@ -131,18 +119,18 @@ pub struct PeerConnectionFactory {
 
 impl PeerConnectionFactory {
   pub fn new() -> Self {
-    Self { ptr: unsafe { create_peer_connection_factory() } }
+    Self { ptr: unsafe { webrtc_rs_create_peer_connection_factory() } }
   }
 
   pub fn create_peer_connection(&self, config: *mut c_void) -> PeerConnection {
-    PeerConnection::from(unsafe { create_peer_connection(self.ptr, config) })
+    PeerConnection::from(unsafe { webrtc_rs_create_peer_connection(self.ptr, config) })
   }
 }
 
 impl Drop for PeerConnectionFactory {
   fn drop(&mut self) {
     unsafe {
-      release_peer_connection_factory(self.ptr);
+      webrtc_rs_release_peer_connection_factory(self.ptr);
     }
   }
 }
@@ -150,7 +138,7 @@ impl Drop for PeerConnectionFactory {
 #[tokio::main]
 async fn main() {
   let factory = PeerConnectionFactory::new();
-  let peer = factory.create_peer_connection(unsafe { create_rtc_configuration() });
+  let peer = factory.create_peer_connection(unsafe { webrtc_rs_create_rtc_configuration() });
 
   let res = peer.create_offer().await;
   println!("{:?}", res);

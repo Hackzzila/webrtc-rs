@@ -9,6 +9,12 @@
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 
+#ifdef _WIN32
+#define WEBRTC_RS_EXPORT __declspec(dllexport)
+#else
+#define WEBRTC_RS_EXPORT
+#endif
+
 class Observer : public webrtc::PeerConnectionObserver {
  public:
   void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) {
@@ -104,7 +110,11 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
 };
 
 extern "C" {
-  void *create_peer_connection_factory() {
+  WEBRTC_RS_EXPORT void webrtc_rs_free(void *ptr) {
+    free(ptr);
+  }
+
+  WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection_factory() {
     auto network_thread = rtc::Thread::Create().release();
     network_thread->Start();
 
@@ -127,19 +137,19 @@ extern "C" {
       nullptr).release();
   }
 
-  void release_peer_connection_factory(void *factory_ptr) {
+  WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection_factory(void *factory_ptr) {
     reinterpret_cast<webrtc::PeerConnectionFactoryInterface *>(factory_ptr)->Release();
   }
 
-  void *create_rtc_configuration() {
+  WEBRTC_RS_EXPORT void *webrtc_rs_create_rtc_configuration() {
     return new webrtc::PeerConnectionInterface::RTCConfiguration();
   }
 
-  void delete_rtc_configuration(void *config_ptr) {
+  WEBRTC_RS_EXPORT void webrtc_rs_delete_rtc_configuration(void *config_ptr) {
     delete reinterpret_cast<webrtc::PeerConnectionInterface::RTCConfiguration *>(config_ptr);
   }
 
-  void *create_peer_connection(void *factory_ptr, void *config_ptr) {
+  WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection(void *factory_ptr, void *config_ptr) {
     auto factory = reinterpret_cast<webrtc::PeerConnectionFactoryInterface *>(factory_ptr);
     // auto config = reinterpret_cast<webrtc::PeerConnectionInterface::RTCConfiguration *>(config_ptr);
 
@@ -164,11 +174,11 @@ extern "C" {
     // return peer.release();
   }
 
-  void release_peer_connection(void *peer_ptr) {
+  WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection(void *peer_ptr) {
     reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr)->Release();
   }
 
-  void peer_connection_create_offer(void *peer_ptr, void *sender, void(*success)(void *, const char *, char *), void(*error)(void *, const char *)) {
+  WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_offer(void *peer_ptr, void *sender, void(*success)(void *, const char *, char *), void(*error)(void *, const char *)) {
     auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
 
     // // const webrtc::DataChannelInit *init = new webrtc::DataChannelInit();
@@ -182,14 +192,14 @@ extern "C" {
     peer->CreateOffer(new CreateSessionDescriptionObserver(sender, success, error), options);
   }
 
-  void peer_connection_create_answer(void *peer_ptr, void *sender, void(*success)(void *, const char *, char *), void(*error)(void *, const char *)) {
+  WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_answer(void *peer_ptr, void *sender, void(*success)(void *, const char *, char *), void(*error)(void *, const char *)) {
     auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
 
     webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
     peer->CreateAnswer(new CreateSessionDescriptionObserver(sender, success, error), options);
   }
 
-  void peer_connection_set_local_description(void *peer_ptr, char *type_str, char *sdp_str, void *sender, void(*success)(void *), void(*error)(void *, const char *)) {
+  WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_set_local_description(void *peer_ptr, char *type_str, char *sdp_str, void *sender, void(*success)(void *), void(*error)(void *, const char *)) {
     auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
 
     auto type = webrtc::SdpTypeFromString(std::string(sdp_str));

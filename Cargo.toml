@@ -3,6 +3,7 @@ name = "wrbrtc"
 version = "0.1.0"
 authors = ["Zachary Vacura <zach@hackzzila.com>"]
 edition = "2018"
+repository = "https://github.com/Hackzzila/rust-webrtc"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

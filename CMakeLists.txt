@@ -6,14 +6,10 @@ set(CMAKE_CXX_STANDARD 11)
 project(webrtc-rs)
 
 if(MSVC)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-if(WIN32)
-  add_library(webrtc-rs STATIC test.cc)
-else()
-  add_library(webrtc-rs SHARED test.cc)
-endif()
+add_library(webrtc-rs SHARED src/native/webrtc-rs.cc)
 
 target_include_directories(webrtc-rs PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/src
@@ -22,23 +18,27 @@ target_include_directories(webrtc-rs PUBLIC
 
 if(WIN32)
   target_link_libraries(webrtc-rs PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/Default/obj/webrtc.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/Default/obj/pc/peerconnection.lib)
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${CMAKE_BUILD_TYPE}/obj/webrtc.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${CMAKE_BUILD_TYPE}/obj/pc/peerconnection.lib)
 
-  # target_link_libraries(test PRIVATE
-  #   dmoguids.lib
-  #   msdmo.lib
-  #   secur32.lib
-  #   winmm.lib
-  #   wmcodecdspuuid.lib
-  #   ws2_32.lib
-  # )
+  target_link_libraries(webrtc-rs PRIVATE
+    dmoguids.lib
+    msdmo.lib
+    secur32.lib
+    winmm.lib
+    wmcodecdspuuid.lib
+    ws2_32.lib
+  )
 
-  target_compile_definitions(test PRIVATE
-    # -D_WINSOCKAPI_
-    # -DINCL_EXTRA_HTON_FUNCTIONS
-    # -DNOGDI
-    # -DNOMINMAX
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_libraries(webrtc-rs PRIVATE MSVCRTD.lib)
+  endif()
+
+  target_compile_definitions(webrtc-rs PRIVATE
+    -D_WINSOCKAPI_
+    -DINCL_EXTRA_HTON_FUNCTIONS
+    -DNOGDI
+    -DNOMINMAX
     -DWEBRTC_WIN
     -D_ITERATOR_DEBUG_LEVEL=0
   )
@@ -48,11 +48,10 @@ elseif(APPLE)
   set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++/trunk/include")
   set(libc++abi_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++abi/trunk/include")
 
-
   # libc++
   # -----------------------------------------------------------------------------
 
-  set(libwebrtc_binary_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/Default)
+  set(libwebrtc_binary_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${CMAKE_BUILD_TYPE})
   set(libwebrtc_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc)
 
   add_library(libc++ OBJECT IMPORTED)
@@ -131,10 +130,6 @@ elseif(APPLE)
   set_property(TARGET libc++abi APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
   set_target_properties(libc++abi PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++abi_objects}" IMPORTED_OBJECTS "${libc++abi_objects}")
 
-
-
-  message(WARNING ${libc++_include_dir})
-
   # NOTE(mroberts): Workaround for
   #
   #   https://gitlab.kitware.com/cmake/cmake/issues/15052
@@ -212,6 +207,6 @@ elseif(APPLE)
   )
 
   target_link_libraries(webrtc-rs PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/Default/obj/libwebrtc.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/Default/obj/pc/libpeerconnection.a)
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${CMAKE_BUILD_TYPE}/obj/libwebrtc.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${CMAKE_BUILD_TYPE}/obj/pc/libpeerconnection.a)
 endif()

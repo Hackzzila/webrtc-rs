@@ -1,147 +1,244 @@
 use std::process::Command;
+// use serde::{Deserialize};
+// use flate2::read::GzDecoder;
+// use tar::Archive;
 
-#[cfg(unix)]
-fn set_link_path() {
-  let mut build_dir = std::env::current_dir().unwrap();
-  build_dir.push("build");
+// #[cfg(not(windows))]
+// fn set_link_path() {
+//   let mut build_dir = std::env::current_dir().unwrap();
+//   build_dir.push("build");
 
-  println!("cargo:rustc-link-search=native={}", build_dir.display());
-}
+//   println!("cargo:rustc-link-search=native={}", build_dir.display());
+// }
 
-#[cfg(not(unix))]
-fn set_link_path() { }
+// #[cfg(windows)]
+// fn set_link_path() {
+//   let mut build_dir = std::env::current_dir().unwrap();
+//   build_dir.push("build");
 
-fn download() -> Result<(), String> {
-  Err("no downloads available".to_string())
-}
+//   let mut profile = std::env::var("PROFILE").unwrap();
+//   profile.make_ascii_lowercase();
 
-#[cfg(not(windows))]
-fn build() {
-  let mut build_path = std::env::current_dir().unwrap();
-  build_path.push("build");
+//   let mut build_type = "Release";
+//   if profile == "debug" {
+//     build_type = "Debug";
+//   }
 
-  if !build_path.is_dir() {
-    std::fs::create_dir(build_path.clone());
-  }
+//   build_dir.push(build_type);
 
-  let mut build_type = "Release";
-  if cfg!(debug_assertions) {
-    build_type = "Debug"
-  }
+//   println!("cargo:rustc-link-search=native={}", build_dir.display());
+// }
 
-  Command::new("cmake")
-          .arg(format!("-DCMAKE_BUILD_TYPE={}", build_type))
-          .arg("..")
-          .current_dir(build_path.clone())
-          .status()
-          .expect("failed to execute 'cmake ..'");
+// #[derive(Deserialize, Debug)]
+// struct GitHubAsset {
+//   name: String,
+//   browser_download_url: String,
+// }
 
-  Command::new("make")
-          .current_dir(build_path.clone())
-          .status()
-          .expect("failed to execute 'make'");
-}
+// #[derive(Deserialize, Debug)]
+// struct GitHubRelease {
+//   tag_name: String,
+//   assets: Vec<GitHubAsset>,
+// }
 
-#[cfg(windows)]
-fn build() {
-  let mut build_path = std::env::current_dir().unwrap();
-  build_path.push("build");
+// fn download_and_unpack(client: reqwest::blocking::Client, url: String) -> Result<(), String> {
+//   let res = client.get(&url)
+//     .header(reqwest::header::USER_AGENT, "webrtc-rs builder")
+//     .send().unwrap();
 
-  if !build_path.is_dir() {
-    std::fs::create_dir(build_path.clone());
-  }
+//   let tar = GzDecoder::new(res);
+//   let mut archive = Archive::new(tar);
+//   match archive.unpack("build") {
+//     Ok(_) => Ok(()),
+//     Err(_) => Err("error unpacking .tar.gz file".to_string()),
+//   }
+// }
 
-  let mut build_type = "Release";
-  if cfg!(debug_assertions) {
-    build_type = "Debug"
-  }
+// fn download() -> Result<(), String> {
+//   let client = reqwest::blocking::Client::new();
+//   let res = client.get("https://api.github.com/repos/Hackzzila/rust-webrtc/releases")
+//     .header(reqwest::header::USER_AGENT, "webrtc-rs builder")
+//     .send().unwrap();
+//   let result = res.json::<Vec<GitHubRelease>>();
 
-  Command::new("cmake")
-          .arg(format!("-DCMAKE_BUILD_TYPE={}", build_type))
-          .arg("..")
-          .current_dir(build_path.clone())
-          .status()
-          .expect("failed to execute 'cmake ..'");
+//   let version_str = format!("v{}", env!("CARGO_PKG_VERSION"));
+//   let target = std::env::var("TARGET").unwrap();
+//   let asset_str = format!("{}.tar.gz", target);
 
-  Command::new("cmake")
-          .arg("--build")
-          .arg(".")
-          .arg("--config")
-          .arg(build_type)
-          .current_dir(build_path.clone())
-          .status()
-          .expect("failed to execute 'make'");
-}
+//   for release in result.unwrap() {
+//     if release.tag_name == version_str {
+//       for asset in release.assets {
+//         if asset.name == asset_str {
+//           return download_and_unpack(client, asset.browser_download_url);
+//         }
+//       }
+//     }
+//   }
 
-fn download_or_build() {
-  let res = download();
-  if res.is_err() {
-    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-    println!("cargo:warning=[webrtc {}] no downloads available - building from source, rerun with -vv to view build output", VERSION);
-    build();
-  }
-}
+//   Err("no download available".to_string())
+// }
 
-#[cfg(any(target_os = "macos", target_os = "ios"))]
-fn copy_library() {
-  let mut lib_file = std::env::current_dir().unwrap();
-  lib_file.push("build");
-  lib_file.push("libwebrtc-rs.dylib");
+// #[cfg(not(windows))]
+// fn build() {
+//   let mut build_path = std::env::current_dir().unwrap();
+//   build_path.push("build");
 
-  let mut out_file_debug = std::env::current_dir().unwrap();
-  out_file_debug.push("target");
-  out_file_debug.push("debug");
+//   if !build_path.is_dir() {
+//     std::fs::create_dir(build_path.clone());
+//   }
 
-  if out_file_debug.is_dir() {
-    out_file_debug.push("libwebrtc-rs.dylib");
+//   let mut profile = std::env::var("PROFILE").unwrap();
+//   profile.make_ascii_lowercase();
 
-    std::fs::copy(lib_file.clone(), out_file_debug);
-  }
+//   let mut build_type = "Release";
+//   if profile == "debug" {
+//     build_type = "Debug";
+//   }
 
-  let mut out_file_release = std::env::current_dir().unwrap();
-  out_file_release.push("target");
-  out_file_release.push("release");
+//   Command::new("cmake")
+//           .arg(format!("-DCMAKE_BUILD_TYPE={}", build_type))
+//           .arg("..")
+//           .current_dir(build_path.clone())
+//           .status()
+//           .expect("failed to execute 'cmake ..'");
 
-  if out_file_release.is_dir() {
-    out_file_release.push("libwebrtc-rs.dylib");
+//   Command::new("make")
+//           .current_dir(build_path.clone())
+//           .status()
+//           .expect("failed to execute 'make'");
+// }
 
-    std::fs::copy(lib_file, out_file_release);
-  }
-}
+// #[cfg(windows)]
+// fn build() {
+//   let mut build_path = std::env::current_dir().unwrap();
+//   build_path.push("build");
 
-#[cfg(all(not(windows), not(any(target_os = "macos", target_os = "ios"))))]
-fn copy_library() {
-  let mut lib_file = std::env::current_dir().unwrap();
-  lib_file.push("build");
-  lib_file.push("libwebrtc-rs.so");
+//   if !build_path.is_dir() {
+//     std::fs::create_dir(build_path.clone());
+//   }
 
-  let mut out_file_debug = std::env::current_dir().unwrap();
-  out_file_debug.push("target");
-  out_file_debug.push("debug");
+//   let mut profile = std::env::var("PROFILE").unwrap();
+//   profile.make_ascii_lowercase();
 
-  if out_file_debug.is_dir() {
-    out_file_debug.push("libwebrtc-rs.so");
+//   let mut build_type = "Release";
+//   if profile == "debug" {
+//     build_type = "Debug";
+//   }
 
-    std::fs::copy(lib_file.clone(), out_file_debug);
-  }
+//   Command::new("python")
+//           .arg("tools/build.py")
+//           .current_dir(build_path.clone())
+//           .status()
+//           .expect("failed to execute 'python tools/build.py'");
 
-  let mut out_file_release = std::env::current_dir().unwrap();
-  out_file_release.push("target");
-  out_file_release.push("release");
+//   Command::new("cmake")
+//           .arg(format!("-DCMAKE_BUILD_TYPE={}", build_type))
+//           .arg("..")
+//           .current_dir(build_path.clone())
+//           .status()
+//           .expect("failed to execute 'cmake ..'");
 
-  if out_file_release.is_dir() {
-    out_file_release.push("libwebrtc-rs.so");
+//   Command::new("cmake")
+//           .arg("--build")
+//           .arg(".")
+//           .arg("--config")
+//           .arg(build_type)
+//           .current_dir(build_path.clone())
+//           .status()
+//           .expect("failed to execute 'cmake --build .'");
+// }
 
-    std::fs::copy(lib_file, out_file_release);
-  }
-}
+// #[cfg(any(target_os = "macos", target_os = "ios"))]
+// fn copy_library() {
+//   let mut lib_file = std::env::current_dir().unwrap();
+//   lib_file.push("build");
+//   lib_file.push("libwebrtc-rs.dylib");
+
+//   let mut out_file = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
+//   out_file.pop();
+//   out_file.pop();
+//   out_file.pop();
+
+//   if out_file.is_dir() {
+//     out_file.push("libwebrtc-rs.dylib");
+
+//     std::fs::copy(lib_file.clone(), out_file);
+//   }
+// }
+
+// #[cfg(all(not(windows), not(any(target_os = "macos", target_os = "ios"))))]
+// fn copy_library() {
+//   let mut lib_file = std::env::current_dir().unwrap();
+//   lib_file.push("build");
+//   lib_file.push("libwebrtc-rs.so");
+
+//   let mut out_file = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
+//   out_file.pop();
+//   out_file.pop();
+//   out_file.pop();
+
+//   if out_file.is_dir() {
+//     out_file.push("libwebrtc-rs.so");
+
+//     std::fs::copy(lib_file.clone(), out_file);
+//   }
+// }
+
+// #[cfg(windows)]
+// fn copy_library() {
+//   let mut dll_file = std::env::current_dir().unwrap();
+//   dll_file.push("build");
+
+//   let mut profile = std::env::var("PROFILE").unwrap();
+//   profile.make_ascii_lowercase();
+
+//   let mut build_type = "Release";
+//   if profile == "debug" {
+//     build_type = "Debug";
+//   }
+
+//   dll_file.push(build_type);
+
+//   let mut pdb_file = dll_file.clone();
+
+//   dll_file.push("webrtc-rs.dll");
+//   pdb_file.push("webrtc-rs.pdb");
+
+//   let mut out_dll_file = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
+//   out_dll_file.pop();
+//   out_dll_file.pop();
+//   out_dll_file.pop();
+
+//   if out_dll_file.is_dir() {
+//     if build_type == "Debug" {
+//       let mut out_pdb_file = out_dll_file.clone();
+//       out_pdb_file.push("webrtc-rs.pdb");
+
+//       std::fs::copy(pdb_file.clone(), out_pdb_file);
+//     }
+
+//     out_dll_file.push("webrtc-rs.dll");
+
+//     std::fs::copy(dll_file.clone(), out_dll_file);
+//   }
+// }
 
 fn main() {
+  Command::new("python")
+          .arg("tools/build.py")
+          .arg("downloadOrBuild")
+          .status()
+          .expect("failed to execute build script");
+
   // println!("cargo:rerun-if-changed=build.rs");
 
-  set_link_path();
+  // set_link_path();
 
-  download_or_build();
+  // let res = download();
+  // if res.is_err() {
+  //   println!("cargo:warning=[webrtc {}] no downloads available - building from source, rerun with -vv to view build output", env!("CARGO_PKG_VERSION"));
+  //   build();
+  // }
 
-  copy_library();
+  // copy_library();
 }
