@@ -10,6 +10,8 @@ import tempfile
 import argparse
 import json
 import tarfile
+import time
+import threading
 
 try:
     from urllib.request import urlopen, urlretrieve, Request
@@ -249,7 +251,20 @@ def clean(args):
 
   return 0
 
+class build_kicker (threading.Thread):
+  def __init__(self):
+    threading.Thread.__init__(self)
+
+  def run(self):
+    while True:
+      time.sleep(540)
+      print('Still working...')
+
 def main():
+  kicker = build_kicker()
+  kicker.daemon = True
+  kicker.start()
+
   parser = argparse.ArgumentParser('build tool for webrtc-rs')
   parser.add_argument('action', choices=['build', 'download', 'downloadOrBuild', 'clean'])
   parser.add_argument('--debug', action='store_true', default=os.environ.get('PROFILE') == 'debug', help="enables debug build")
@@ -267,7 +282,7 @@ def main():
       log(WARNING, "couldn't find prebuilt for {} v{}".format(args.target, args.version))
   elif (args.action == 'downloadOrBuild'):
     if download(args) != 0:
-      log(WARNING, "no downloads available for {} v{} - building from source".format(args.target, args.version))
+      log(WARNING, "no prebuilts available for {} v{} - building from source".format(args.target, args.version))
 
       return build(args)
     return 0
