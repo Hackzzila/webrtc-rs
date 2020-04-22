@@ -11,8 +11,9 @@ jobs:
   allow_failures:
     - rust: nightly
   fast_finish: true
+env:
+  - PYTHONHTTPSVERIFY=0
 install:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export PYTHONHTTPSVERIFY=0; fi
   - python tools/build.py build
   - cargo build -vv
 script:
