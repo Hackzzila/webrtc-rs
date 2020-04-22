@@ -11,8 +11,9 @@ jobs:
   allow_failures:
     - rust: nightly
   fast_finish: true
+before_install:
+  - python -m pip install --user git+https://github.com/naftulikay/travis-pls
 install:
-  - pip install git+https://github.com/naftulikay/travis-pls
   - travis-pls python tools/build.py build
   - cargo build -vv
 script:
