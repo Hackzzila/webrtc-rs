@@ -45,7 +45,7 @@ if(WIN32)
     -DWEBRTC_WIN
     -D_ITERATOR_DEBUG_LEVEL=0
   )
-elseif(APPLE)
+else()
   set(libwebrtc_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc)
 
   set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++/trunk/include")
@@ -167,7 +167,7 @@ elseif(APPLE)
   )
 
   target_compile_definitions(webrtc-rs PRIVATE
-    # -D_LIBCPP_ABI_UNSTABLE
+    -D_LIBCPP_ABI_UNSTABLE
     -DWEBRTC_POSIX=1
   )
 
@@ -177,37 +177,44 @@ elseif(APPLE)
     )
   endif()
 
-  target_link_libraries(webrtc-rs PRIVATE
-    # "-framework AppKit"
-    # "-framework AVFoundation
-    "-framework Cocoa"
-    "-framework CoreAudio"
-    "-framework AudioToolbox"
-  )
+  if(APPLE)
+    target_link_libraries(webrtc-rs PRIVATE
+      # "-framework AppKit"
+      # "-framework AVFoundation
+      "-framework Cocoa"
+      "-framework CoreAudio"
+      "-framework AudioToolbox"
+    )
 
-  target_compile_options(webrtc-rs PRIVATE
-    -Weverything
-    -Wno-c++98-compat
-    -Wno-c++98-compat-pedantic
-    -Wno-documentation
-    -Wno-exit-time-destructors
-    -Wno-float-conversion
-    -Wno-global-constructors
-    -Wno-padded
-    -Wno-shadow
-    -Wno-shadow-field-in-constructor
-    -Wno-shorten-64-to-32
-    -Wno-sign-conversion
-    -Wno-thread-safety-negative
-    -Wno-unused-template
-    -Wno-weak-vtables
-  )
+    target_compile_options(webrtc-rs PRIVATE
+      -Weverything
+      -Wno-c++98-compat
+      -Wno-c++98-compat-pedantic
+      -Wno-documentation
+      -Wno-exit-time-destructors
+      -Wno-float-conversion
+      -Wno-global-constructors
+      -Wno-padded
+      -Wno-shadow
+      -Wno-shadow-field-in-constructor
+      -Wno-shorten-64-to-32
+      -Wno-sign-conversion
+      -Wno-thread-safety-negative
+      -Wno-unused-template
+      -Wno-weak-vtables
+    )
 
-  target_compile_definitions(webrtc-rs PRIVATE
-    -D_LIBCPP_ABI_UNSTABLE
-    -DWEBRTC_MAC
-    -DWEBRTC_IOS
-  )
+    target_compile_definitions(webrtc-rs PRIVATE
+      -D_LIBCPP_ABI_UNSTABLE
+      -DWEBRTC_MAC
+      -DWEBRTC_IOS
+    )
+  else()
+    target_compile_definitions(webrtc-rs PRIVATE
+      -D_LIBCPP_ABI_UNSTABLE
+      -DDWEBRTC_LINUX
+    )
+  endif()
 
   target_link_libraries(webrtc-rs PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${CMAKE_BUILD_TYPE}/obj/libwebrtc.a
