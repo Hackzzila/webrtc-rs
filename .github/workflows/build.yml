@@ -1,10 +1,13 @@
 name: build
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
-    runs-on: windows-runner
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-runner, windows-runner]
     steps:
     - uses: actions/checkout@v2
     - name: Build C++ Debug

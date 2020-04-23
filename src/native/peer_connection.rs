@@ -78,10 +78,7 @@ impl RTCPeerConnection {
       webrtc_rs_peer_connection_create_offer(self.ptr, Box::into_raw(boxed), create_session_description_observer_success, create_session_description_observer_failure);
     }
 
-    match rx.await {
-      Ok(result) => result,
-      Err(err) => Err(err.to_string()),
-    }
+    rx.await.map_err(|x| x.to_string())?
   }
 
   pub async fn create_answer(&self) -> Result<RTCSessionDescription, String> {
@@ -92,10 +89,7 @@ impl RTCPeerConnection {
       webrtc_rs_peer_connection_create_answer(self.ptr, Box::into_raw(boxed), create_session_description_observer_success, create_session_description_observer_failure);
     }
 
-    match rx.await {
-      Ok(result) => result,
-      Err(err) => Err(err.to_string()),
-    }
+    rx.await.map_err(|x| x.to_string())?
   }
 
   pub async fn set_local_description(&self, desc: RTCSessionDescription) -> Result<(), String> {
@@ -125,10 +119,7 @@ impl RTCPeerConnection {
       }
     }
 
-    match rx.await {
-      Ok(result) => return result,
-      Err(err) => Err(err.to_string()),
-    }
+    rx.await.map_err(|x| x.to_string())?
   }
 
   pub async fn set_remote_description(&self, desc: RTCSessionDescription) -> Result<(), String> {
@@ -158,10 +149,7 @@ impl RTCPeerConnection {
       }
     }
 
-    match rx.await {
-      Ok(result) => return result,
-      Err(err) => Err(err.to_string()),
-    }
+    rx.await.map_err(|x| x.to_string())?
   }
 }
 
