@@ -11,8 +11,13 @@ extern "C" {
 
 class Observer : public webrtc::PeerConnectionObserver {
  public:
-  void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) {
+  Observer(void *rust_observer, std::function<void(void *, int)> on_signaling_change): rust_observer_(rust_observer), on_signaling_change_(on_signaling_change) { }
+
+  void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState state) {
     std::cout << "OnSignalingChange" << std::endl;
+    if (on_signaling_change_) {
+      on_signaling_change_(rust_observer_, static_cast<int>(state));
+    }
   }
 
   void OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
@@ -30,15 +35,19 @@ class Observer : public webrtc::PeerConnectionObserver {
   void OnIceCandidate(const webrtc::IceCandidateInterface *canidate) {
     std::cout << "OnIceCanidate" << std::endl;
   }
+
+ private:
+  void *rust_observer_;
+  std::function<void(void *, int)> on_signaling_change_;
 };
 
 namespace webrtc_rs {
 
-WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection(void *factory_ptr, void *config_ptr) {
+WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection(void *factory_ptr, void *config_ptr, void *rust_observer, void(*on_signaling_change)(void *, int)) {
   auto factory = reinterpret_cast<webrtc::PeerConnectionFactoryInterface *>(factory_ptr);
-  auto config = reinterpret_cast<InternalRTCConfiguration *>(config_ptr);
+  auto config = reinterpret_cast<internal::RTCConfiguration *>(config_ptr);
 
-  Observer *observer = new Observer();
+  Observer *observer = new Observer(rust_observer, on_signaling_change);
 
   return factory->CreatePeerConnection(*config, webrtc::PeerConnectionDependencies(observer)).release();
 }

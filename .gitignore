@@ -2,7 +2,9 @@
 
 Cargo.lock
 
-deps/webrtc/*
-deps/depot_tools/*
+deps/webrtc
+deps/depot_tools
 
 build/
+
+.vscode

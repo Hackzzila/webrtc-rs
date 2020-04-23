@@ -131,7 +131,7 @@ def build(args):
 
     log(MESSAGE, 'Syncing WebRTC')
 
-    process = subprocess.Popen(['git', 'checkout', 'branch-heads/' + WEBRTC_VERSION], cwd='deps/webrtc/src', shell=use_shell)
+    process = subprocess.Popen(['git', 'checkout', '-f', 'branch-heads/' + WEBRTC_VERSION], cwd='deps/webrtc/src', shell=use_shell)
     process.wait()
     if process.returncode != 0:
       log(ERROR, 'Failed to checkout branch')
@@ -256,20 +256,7 @@ def clean(args):
 
   return 0
 
-class build_kicker (threading.Thread):
-  def __init__(self):
-    threading.Thread.__init__(self)
-
-  def run(self):
-    while True:
-      time.sleep(540)
-      print('Still working...')
-
 def main():
-  kicker = build_kicker()
-  kicker.daemon = True
-  kicker.start()
-
   parser = argparse.ArgumentParser('build tool for webrtc-rs')
   parser.add_argument('action', choices=['build', 'download', 'downloadOrBuild', 'clean'])
   parser.add_argument('--debug', action='store_true', default=os.environ.get('PROFILE') == 'debug', help="enables debug build")

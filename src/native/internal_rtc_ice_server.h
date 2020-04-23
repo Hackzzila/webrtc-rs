@@ -5,7 +5,9 @@
 
 namespace webrtc_rs {
 
-struct InternalRTCIceServer {
+namespace internal {
+
+struct RTCIceServer {
   char **urls;
   size_t urls_len;
   char *username;
@@ -23,6 +25,8 @@ struct InternalRTCIceServer {
     return ice_server;
   }
 };
+
+};  // namespace internal
 
 };  // namespace webrtc_rs
 

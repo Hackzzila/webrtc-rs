@@ -7,8 +7,10 @@
 
 namespace webrtc_rs {
 
-struct InternalRTCConfiguration {
-  InternalRTCIceServer *ice_servers;
+namespace internal {
+
+struct RTCConfiguration {
+  RTCIceServer *ice_servers;
   size_t ice_servers_len;
   int *ice_transport_policy;
   int *bundle_policy;
@@ -42,6 +44,8 @@ struct InternalRTCConfiguration {
     return config;
   }
 };
+
+};  // namespace internal
 
 }; // namespace webrtc_rs
 

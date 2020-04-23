@@ -1,9 +1,9 @@
 [package]
-name = "wrbrtc"
-version = "0.1.0"
+name = "webrtc-rs"
+version = "0.1.1"
 authors = ["Zachary Vacura <zach@hackzzila.com>"]
 edition = "2018"
-repository = "https://github.com/Hackzzila/rust-webrtc"
+repository = "https://github.com/Hackzzila/webrtc-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
