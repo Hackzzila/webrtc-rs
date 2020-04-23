@@ -9,5 +9,5 @@ pub struct RTCConfiguration {
   pub ice_transport_policy: *const i32,
   pub bundle_policy: *const i32,
   pub rtcp_mux_policy: *const i32,
-  pub ice_canidate_pool_size: *const u16,
+  pub ice_candidate_pool_size: *const u16,
 }

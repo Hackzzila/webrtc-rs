@@ -9,7 +9,10 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-add_library(webrtc-rs SHARED src/native/webrtc-rs.cc)
+add_library(webrtc-rs SHARED
+            src/native/bindings/peer_connection_factory.cc
+            src/native/bindings/peer_connection.cc
+            src/native/bindings/webrtc_rs.cc)
 
 target_include_directories(webrtc-rs PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/src

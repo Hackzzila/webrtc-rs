@@ -6,8 +6,8 @@ extern "C" {
 
 namespace webrtc_rs {
 
-WEBRTC_RS_EXPORT void webrtc_rs_free(void *ptr) {
-  free(ptr);
+WEBRTC_RS_EXPORT void webrtc_rs_delete(void *ptr) {
+  delete ptr;
 }
 
 };

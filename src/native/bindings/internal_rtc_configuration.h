@@ -15,7 +15,7 @@ struct RTCConfiguration {
   int *ice_transport_policy;
   int *bundle_policy;
   int *rtcp_mux_policy;
-  uint16_t *ice_canidate_pool_size;
+  uint16_t *ice_candidate_pool_size;
 
   operator webrtc::PeerConnectionInterface::RTCConfiguration() const {
     webrtc::PeerConnectionInterface::RTCConfiguration config;
@@ -37,8 +37,8 @@ struct RTCConfiguration {
       config.rtcp_mux_policy = static_cast<webrtc::PeerConnectionInterface::RtcpMuxPolicy>(*this->rtcp_mux_policy);
     }
 
-    if (this->ice_canidate_pool_size) {
-      config.ice_candidate_pool_size = *this->ice_canidate_pool_size;
+    if (this->ice_candidate_pool_size) {
+      config.ice_candidate_pool_size = *this->ice_candidate_pool_size;
     }
 
     return config;

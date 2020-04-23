@@ -2,35 +2,31 @@ use libc::{c_char, c_void};
 use std::ffi::{CStr, CString};
 
 use crate::*;
+use crate::internal::FromWithCleanup;
 
-type CreateSessionDescriptionObserverSender = *mut tokio::sync::oneshot::Sender<Result<(String, String), String>>;
+type CreateSessionDescriptionObserverSender = *mut tokio::sync::oneshot::Sender<Result<RTCSessionDescription, String>>;
 type SetSessionDescriptionObserverSender = *mut tokio::sync::oneshot::Sender<Result<(), String>>;
 
-unsafe extern fn create_session_description_observer_success(sender: CreateSessionDescriptionObserverSender, type_str: *const c_char, sdp: *mut u8) {
-  let len = libc::strlen(sdp as *mut i8);
-  let slice = std::slice::from_raw_parts_mut(sdp, len);
-
-  let string = std::str::from_utf8_mut(slice).unwrap();
-
+unsafe extern fn create_session_description_observer_success(sender: CreateSessionDescriptionObserverSender, desc_internal: internal::RTCSessionDescription) {
+  let desc = RTCSessionDescription::from(desc_internal);
   let boxed = Box::from_raw(sender);
-  boxed.send(Ok((CStr::from_ptr(type_str).to_str().unwrap().to_string(), string.to_string().clone())));
 
-  internal::free(sdp as *mut c_void);
+  boxed.send(Ok(desc)).expect("oneshot receiver dropped");
 }
 
 unsafe extern fn create_session_description_observer_failure(sender: CreateSessionDescriptionObserverSender, err: *const c_char) {
   let boxed = Box::from_raw(sender);
-  boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string()));
+  boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string())).expect("oneshot receiver dropped");
 }
 
 unsafe extern fn set_session_description_observer_success(sender: SetSessionDescriptionObserverSender) {
   let boxed = Box::from_raw(sender);
-  boxed.send(Ok(()));
+  boxed.send(Ok(())).expect("oneshot receiver dropped");
 }
 
 unsafe extern fn set_session_description_observer_failure(sender: SetSessionDescriptionObserverSender, err: *const c_char) {
   let boxed = Box::from_raw(sender);
-  boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string()));
+  boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string())).expect("oneshot receiver dropped");
 }
 
 #[link(name = "webrtc-rs")]
@@ -40,21 +36,20 @@ extern {
   fn webrtc_rs_peer_connection_create_offer(
     peer: *mut c_void,
     sender: CreateSessionDescriptionObserverSender,
-    success: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char, *mut u8),
+    success: unsafe extern fn(CreateSessionDescriptionObserverSender, internal::RTCSessionDescription),
     error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char)
   );
 
   fn webrtc_rs_peer_connection_create_answer(
     peer: *mut c_void,
     sender: CreateSessionDescriptionObserverSender,
-    success: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char, *mut u8),
+    success: unsafe extern fn(CreateSessionDescriptionObserverSender, internal::RTCSessionDescription),
     error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char)
   );
 
   fn webrtc_rs_peer_connection_set_local_description(
     peer: *mut c_void,
-    type_str: *mut c_char,
-    sdp: *mut c_char,
+    desc: *mut internal::RTCSessionDescription,
     sender: SetSessionDescriptionObserverSender,
     success: unsafe extern fn(SetSessionDescriptionObserverSender),
     error: unsafe extern fn(SetSessionDescriptionObserverSender, *const c_char)
@@ -62,8 +57,7 @@ extern {
 
   fn webrtc_rs_peer_connection_set_remote_description(
     peer: *mut c_void,
-    type_str: *mut c_char,
-    sdp: *mut c_char,
+    desc: *mut internal::RTCSessionDescription,
     sender: SetSessionDescriptionObserverSender,
     success: unsafe extern fn(SetSessionDescriptionObserverSender),
     error: unsafe extern fn(SetSessionDescriptionObserverSender, *const c_char)
@@ -76,7 +70,7 @@ pub struct RTCPeerConnection {
 }
 
 impl RTCPeerConnection {
-  pub async fn create_offer(&self) -> Result<(String, String), String> {
+  pub async fn create_offer(&self) -> Result<RTCSessionDescription, String> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let boxed = Box::new(tx);
 
@@ -85,12 +79,12 @@ impl RTCPeerConnection {
     }
 
     match rx.await {
-      Ok(result) => return result,
+      Ok(result) => result,
       Err(err) => Err(err.to_string()),
     }
   }
 
-  pub async fn create_answer(&self) -> Result<(String, String), String> {
+  pub async fn create_answer(&self) -> Result<RTCSessionDescription, String> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let boxed = Box::new(tx);
 
@@ -99,27 +93,36 @@ impl RTCPeerConnection {
     }
 
     match rx.await {
-      Ok(result) => return result,
+      Ok(result) => result,
       Err(err) => Err(err.to_string()),
     }
   }
 
-  pub async fn set_local_description(&self, type_str: String, sdp: String) -> Result<(), String> {
+  pub async fn set_local_description(&self, desc: RTCSessionDescription) -> Result<(), String> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let boxed = Box::new(tx);
 
-    unsafe {
-      let type_cstr = CString::new(type_str).unwrap();
-      let sdp_cstr = CString::new(sdp).unwrap();
+    let mut c_strings = Vec::new();
 
+    let internal_desc = Box::new(internal::RTCSessionDescription::from_with_cleanup(desc, &mut c_strings));
+    let internal_desc_ptr = Box::into_raw(internal_desc);
+
+    unsafe {
       webrtc_rs_peer_connection_set_local_description(
         self.ptr,
-        type_cstr.into_raw(),
-        sdp_cstr.into_raw(),
+        internal_desc_ptr,
         Box::into_raw(boxed),
         set_session_description_observer_success,
         set_session_description_observer_failure,
       );
+    }
+
+    unsafe { Box::from_raw(internal_desc_ptr ); }
+
+    for c_string in c_strings {
+      unsafe {
+        CString::from_raw(c_string);
+      }
     }
 
     match rx.await {
@@ -128,22 +131,31 @@ impl RTCPeerConnection {
     }
   }
 
-  pub async fn set_remote_description(&self, type_str: String, sdp: String) -> Result<(), String> {
+  pub async fn set_remote_description(&self, desc: RTCSessionDescription) -> Result<(), String> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let boxed = Box::new(tx);
 
-    unsafe {
-      let type_cstr = CString::new(type_str).unwrap();
-      let sdp_cstr = CString::new(sdp).unwrap();
+    let mut c_strings = Vec::new();
 
+    let internal_desc = Box::new(internal::RTCSessionDescription::from_with_cleanup(desc, &mut c_strings));
+    let internal_desc_ptr = Box::into_raw(internal_desc);
+
+    unsafe {
       webrtc_rs_peer_connection_set_remote_description(
         self.ptr,
-        type_cstr.into_raw(),
-        sdp_cstr.into_raw(),
+        internal_desc_ptr,
         Box::into_raw(boxed),
         set_session_description_observer_success,
         set_session_description_observer_failure,
       );
+    }
+
+    unsafe { Box::from_raw(internal_desc_ptr ); }
+
+    for c_string in c_strings {
+      unsafe {
+        CString::from_raw(c_string);
+      }
     }
 
     match rx.await {

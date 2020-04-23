@@ -1,10 +1,16 @@
-pub(crate) mod internal;
+#![allow(improper_ctypes)]
+
+#[cfg_attr(not(target_arch = "wasm32"), path = "native/mod.rs")]
+#[cfg_attr(target_arch = "wasm32", path = "webassembly/mod.rs")]
+mod backend;
+
 mod configuration;
 mod ice_server;
 mod observer;
-mod peer_connection;
-mod peer_connection_factory;
+mod session_description;
 mod signaling_state;
+
+pub use backend::*;
 
 pub use configuration::{
   RTCIceTransportPolicy,
@@ -17,9 +23,7 @@ pub use ice_server::RTCIceServer;
 
 pub use observer::Observer;
 
-pub use peer_connection_factory::RTCPeerConnectionFactory;
-
-pub use peer_connection::RTCPeerConnection;
+pub use session_description::{RTCSdpType, RTCSessionDescription};
 
 pub use signaling_state::RTCSignalingState;
 
@@ -40,7 +44,7 @@ macro_rules! ice_servers {
       RTCConfiguration {
         ice_servers: Some(temp_ice_servers),
         ice_transport_policy: None,
-        ice_canidate_pool_size: None,
+        ice_candidate_pool_size: None,
         bundle_policy: None,
         rtcp_mux_policy: None,
       }

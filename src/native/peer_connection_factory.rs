@@ -2,6 +2,7 @@ use libc::c_void;
 use std::ffi::CString;
 
 use crate::*;
+use crate::internal::FromWithCleanup;
 
 unsafe extern fn observer_on_signaling_state_change(ob: *mut Box<dyn Observer>, state_num: i32) {
   let observer = Box::from_raw(ob);
@@ -35,7 +36,7 @@ impl RTCPeerConnectionFactory {
   pub fn create_peer_connection(&self, config: RTCConfiguration, ob: Box<dyn Observer>) -> RTCPeerConnection {
     let mut c_strings = Vec::new();
 
-    let internal_config = Box::new(config.into_internal(&mut c_strings).unwrap());
+    let internal_config = Box::new(internal::RTCConfiguration::from_with_cleanup(config, &mut c_strings));
     let internal_config_ptr = Box::into_raw(internal_config);
 
     let observer = Box::new(ob);

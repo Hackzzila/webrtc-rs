@@ -257,6 +257,8 @@ def clean(args):
   return 0
 
 def main():
+  if os.environ.get('CARGO_CFG_TARGET_ARCH') == 'wasm32': return 0
+
   parser = argparse.ArgumentParser('build tool for webrtc-rs')
   parser.add_argument('action', choices=['build', 'download', 'downloadOrBuild', 'clean'])
   parser.add_argument('--debug', action='store_true', default=os.environ.get('PROFILE') == 'debug', help="enables debug build")

@@ -1,6 +1,7 @@
 #ifndef WEBRTC_RS_SET_SESSION_DESCRIPTION_OBSERVER_H_
 #define WEBRTC_RS_SET_SESSION_DESCRIPTION_OBSERVER_H_
 
+#include <atomic>
 #include <functional>
 
 #include "api/jsep.h"
@@ -24,8 +25,7 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
   }
 
   rtc::RefCountReleaseStatus Release() const override {
-    ref_count_--;
-    if (ref_count_ == 0) {
+    if (--ref_count_ == 0) {
       delete this;
       return rtc::RefCountReleaseStatus::kDroppedLastRef;
     }
@@ -34,7 +34,7 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
   }
 
  private:
-  mutable int ref_count_ = 0;
+  mutable std::atomic<int> ref_count_ = 0;
   void *sender_ = nullptr;
   std::function<void(void *)> success_ = nullptr;
   std::function<void(void *, const char *)> error_ = nullptr;
