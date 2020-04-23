@@ -36,7 +36,7 @@ ENDC = '\033[0m'
 def log(level, message):
   if os.environ.get('CARGO') != None:
     if (level == WARNING or level == ERROR):
-      print('cargo:warning=' + message)
+      print('cargo:warning=[{} v{}] {}'.format(os.environ.get('CARGO_PKG_NAME'), os.environ.get('CARGO_PKG_VERSION'), message))
     else:
       print(message)
   else:
@@ -211,28 +211,33 @@ def build(args):
   return 0
 
 def download(args):
-  repo = args.repo.split('/')
-  req = Request('https://api.github.com/repos/{}/{}/releases'.format(repo[len(repo)-2], repo[len(repo)-1]))
-  req.add_header('User-Agent', 'webrtc-rs builder')
+  try:
+    repo = args.repo.split('/')
+    req = Request('https://api.github.com/repos/{}/{}/releases'.format(repo[len(repo)-2], repo[len(repo)-1]))
+    req.add_header('User-Agent', 'webrtc-rs builder')
 
-  res = urlopen(req)
-  releases = json.loads(res.read())
+    res = urlopen(req)
+    releases = json.loads(res.read())
 
-  for release in releases:
-    if release[u'tag_name'] == 'v{}'.format(args.version):
-      for asset in release[u'assets']:
-        if asset[u'name'] == '{}.tar.gz'.format(args.target):
-          log(MESSAGE, 'Downloading {} {}'.format(asset[u'name'], release[u'tag_name']))
-          temp_path = os.path.join(tempfile.mkdtemp(), asset[u'name'])
-          urlretrieve(asset[u'browser_download_url'], temp_path)
+    for release in releases:
+      if release[u'tag_name'] == 'v{}'.format(args.version):
+        for asset in release[u'assets']:
+          if asset[u'name'] == '{}.tar.gz'.format(args.target):
+            log(MESSAGE, 'Downloading {} {}'.format(asset[u'name'], release[u'tag_name']))
+            temp_path = os.path.join(tempfile.mkdtemp(), asset[u'name'])
+            urlretrieve(asset[u'browser_download_url'], temp_path)
 
-          log(MESSAGE, 'Extracting {} {}'.format(asset[u'name'], release[u'tag_name']))
-          with tarfile.open(temp_path, 'r') as tf:
-            tf.extractall('build')
+            log(MESSAGE, 'Extracting {} {}'.format(asset[u'name'], release[u'tag_name']))
+            with tarfile.open(temp_path, 'r') as tf:
+              tf.extractall('build')
 
-          copy_library(args)
-          log(SUCCESS, 'Successfully downloaded')
-          return 0
+            copy_library(args)
+            log(SUCCESS, 'Successfully downloaded')
+            return 0
+  except HTTPError as err:
+    log(WARNING, "download failed with code {}: {}".format(err.code, err.reason))
+  except:
+    log(WARNING, "download failed")
 
   return 1
 
