@@ -1,0 +1,32 @@
+name: rust
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-runner
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build C++ Debug
+      run: python ./tools/build.py build --debug
+    - name: Build C++ Release
+      run: python ./tools/build.py build --debug
+    - name: Build Rust Debug
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+    - name: Build Rust Release
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+    # - name: Test
+    #   uses: actions-rs/cargo@v1
+    #   with:
+    #     command: test
+    #     args: --release --workspace
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: windows_build
+        path: build
