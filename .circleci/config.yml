@@ -1,0 +1,16 @@
+version: 2.1
+jobs:
+  docker:
+    - image: ubuntu:latest
+      environment:
+        ENV: test
+    steps:
+      - run:
+          name: installation
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python build-essential cmake
+      - checkout
+      - run:
+          name: "C++ Debug Build"
+          command: python ./tools/build.py build --debug
