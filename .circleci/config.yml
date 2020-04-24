@@ -13,11 +13,11 @@ jobs:
             apk add python gcc g++ cmake make git wget
       - checkout
       - restore_cache:
-        key: webrtc
+          key: webrtc
       - run:
           name: "C++ Debug Build"
           command: python ./tools/build.py build --debug
       - save_cache:
-        key: webrtc
-        paths:
-          - ~/project/deps
+          key: webrtc
+          paths:
+            - ~/project/deps
