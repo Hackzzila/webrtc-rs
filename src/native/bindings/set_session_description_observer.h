@@ -34,7 +34,7 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
   }
 
  private:
-  mutable std::atomic<int> ref_count_ = 0;
+  mutable std::atomic<int> ref_count_{0};
   void *sender_ = nullptr;
   std::function<void(void *)> success_ = nullptr;
   std::function<void(void *, const char *)> error_ = nullptr;
