@@ -3,9 +3,11 @@ jobs:
   build:
     docker:
       - image: ubuntu:latest
+        environment:
+          TAR_OPTIONS: --no-same-owner
     steps:
       - run:
-          name: installation
+          name: Installation
           command: |
             apt-get update
             apt-get install -y python build-essential cmake git wget
