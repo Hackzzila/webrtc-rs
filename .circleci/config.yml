@@ -2,15 +2,15 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: rust:alpine
+      - image: ubuntu:latest
         environment:
           TAR_OPTIONS: --no-same-owner
     steps:
       - run:
           name: Installation
           command: |
-            apk update
-            apk add python gcc g++ cmake make git wget
+            apt-get update
+            apt-get install python build-essential cmake git wget
       - checkout
       - restore_cache:
           key: webrtc

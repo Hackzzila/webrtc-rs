@@ -143,6 +143,13 @@ def build(args):
       log(ERROR, 'Failed to sync WebRTC')
       return 1
 
+    if os_name == 'Linux':
+      process = subprocess.Popen(['./build/install-build-deps.sh'], cwd='deps/webrtc/src', shell=use_shell)
+      process.wait()
+      if process.returncode != 0:
+        log(ERROR, 'Failed to install build deps')
+        return 1
+
     log(MESSAGE, 'WebRTC up to date')
 
   out_dir = "out/Release"
