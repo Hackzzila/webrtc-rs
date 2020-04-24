@@ -10,7 +10,7 @@ jobs:
           name: Installation
           command: |
             apt-get update
-            apt-get install python build-essential cmake git wget
+            apt-get install -y python build-essential cmake git wget
       - checkout
       - restore_cache:
           key: webrtc
