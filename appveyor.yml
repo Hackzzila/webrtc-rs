@@ -1,7 +1,8 @@
-
-image:
-  - macOS
-  - Ubuntu
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+    - APPVEYOR_BUILD_WORKER_IMAGE: Windows
+      APPVEYOR_BUILD_WORKER_CLOUD: Windows-CI
 
 build_script:
   - python ./tools/build.py build --debug

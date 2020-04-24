@@ -30,6 +30,7 @@ class CreateSessionDescriptionObserver : public webrtc::CreateSessionDescription
 
   rtc::RefCountReleaseStatus Release() const override {
     if (--ref_count_ == 0) {
+      delete this;
       return rtc::RefCountReleaseStatus::kDroppedLastRef;
     }
 

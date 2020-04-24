@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [linux-runner, windows-runner]
+        os: [linux-runner]
     steps:
     - uses: actions/checkout@v2
     - name: Build C++ Debug
