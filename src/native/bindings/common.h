@@ -4,7 +4,7 @@
 #ifdef _WIN32
   #define WEBRTC_RS_EXPORT __declspec(dllexport)
 #else
-  #define WEBRTC_RS_EXPORT_
+  #define WEBRTC_RS_EXPORT
 #endif
 
 
