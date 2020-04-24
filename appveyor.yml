@@ -1,7 +1,7 @@
 
 image: Visual Studio 2017
 
-build:
+build_script:
   - python .\tools\build.py build --debug
 
 cache:
