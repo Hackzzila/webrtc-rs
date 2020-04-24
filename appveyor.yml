@@ -4,7 +4,7 @@ image:
   - Ubuntu
 
 build_script:
-  - python .\tools\build.py build --debug
+  - python ./tools/build.py build --debug
 
 cache:
   - deps/
