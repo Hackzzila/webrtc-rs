@@ -1,9 +1,8 @@
 version: 2.1
 jobs:
-  docker:
-    - image: ubuntu:latest
-      environment:
-        ENV: test
+  build:
+    docker:
+      - image: ubuntu:latest
     steps:
       - run:
           name: installation
