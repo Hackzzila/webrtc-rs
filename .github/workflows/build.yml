@@ -7,13 +7,23 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [linux-runner]
+        os: [Windows, Linux]
     steps:
+    - if: matrix.os == 'Linux'
+      run: mkdir -p ~/actions-cache && ln -s ~/actions-cache ./deps
+
+    - name: Setup Build Cache
+      if: matrix.os == 'Windows'
+      run: mklink /D deps C:\actions-cache
+
     - uses: actions/checkout@v2
+
     - name: Build C++ Debug
       run: python ./tools/build.py build --debug
+
     - name: Build C++ Release
       run: python ./tools/build.py build --debug
+
     - name: Build Rust Debug
       uses: actions-rs/cargo@v1
       with:

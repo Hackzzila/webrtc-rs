@@ -1,21 +1,4 @@
-environment:
-  matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-    - APPVEYOR_BUILD_WORKER_IMAGE: Windows
-      APPVEYOR_BUILD_WORKER_CLOUD: Windows-CI
-
-for:
-  -
-    matrix:
-      only:
-        - APPVEYOR_BUILD_WORKER_IMAGE: Windows
-  
-    install:
-    - cinst rust
-    - cinst python2
+image: macOS
 
 build_script:
   - python ./tools/build.py build --debug
-
-cache:
-  - deps/
