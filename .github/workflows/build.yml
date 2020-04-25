@@ -9,14 +9,15 @@ jobs:
       matrix:
         os: [Windows, Linux]
     steps:
-    - if: matrix.os == 'Linux'
+    - uses: actions/checkout@v2
+
+    - name: Setup Build Cache on Linux
+      if: matrix.os == 'Linux'
       run: mkdir -p ~/actions-cache && ln -s ~/actions-cache ./deps
 
-    - name: Setup Build Cache
+    - name: Setup Build Cache on Windows
       if: matrix.os == 'Windows'
       run: mklink /D deps C:\actions-cache
-
-    - uses: actions/checkout@v2
 
     - name: Build C++ Debug
       run: python ./tools/build.py build --debug
