@@ -8,6 +8,9 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
     steps:
       - run:
+          name: Add sudo alias
+          run: alias sudo=""
+      - run:
           name: Installation
           command: |
             apt-get update
