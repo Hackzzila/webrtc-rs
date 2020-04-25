@@ -4,6 +4,16 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Windows
       APPVEYOR_BUILD_WORKER_CLOUD: Windows-CI
 
+for:
+  -
+    matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Windows
+  
+    install:
+    - cinst rust
+    - cinst python2
+
 build_script:
   - python ./tools/build.py build --debug
 
