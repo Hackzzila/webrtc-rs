@@ -5,6 +5,7 @@ jobs:
       - image: ubuntu:latest
         environment:
           TAR_OPTIONS: --no-same-owner
+          DEBIAN_FRONTEND: noninteractive
     steps:
       - run:
           name: Installation
