@@ -8,13 +8,10 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
     steps:
       - run:
-          name: Add sudo alias
-          command: alias sudo=""
-      - run:
           name: Installation
           command: |
             apt-get update
-            apt-get install -y python build-essential cmake git wget lsb-release
+            apt-get install -y python build-essential cmake git wget lsb-release sudo
       - checkout
       - restore_cache:
           key: webrtc
