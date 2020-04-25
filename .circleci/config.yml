@@ -9,7 +9,7 @@ jobs:
     steps:
       - run:
           name: Add sudo alias
-          run: alias sudo=""
+          command: alias sudo=""
       - run:
           name: Installation
           command: |
