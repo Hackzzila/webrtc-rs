@@ -15,7 +15,7 @@ jobs:
       run: python ./tools/build.py build --debug
 
     - name: Build C++ Release
-      run: python ./tools/build.py build --debug
+      run: python ./tools/build.py build
 
     - name: Build Rust Debug
       uses: actions-rs/cargo@v1
@@ -44,7 +44,7 @@ jobs:
       run: python ./tools/build.py build --debug
 
     - name: Build C++ Release
-      run: python ./tools/build.py build --debug
+      run: python ./tools/build.py build
 
     - name: Build Rust Debug
       uses: actions-rs/cargo@v1
