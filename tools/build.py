@@ -54,21 +54,21 @@ def copy_library(args):
   copy_files = []
   if os_name == 'Windows':
     if args.debug:
-      copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
+      copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
 
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
+    copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
 
   elif os_name == 'Darwin':
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
+    copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
 
   else:
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
+    copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
 
   for file_name in copy_files:
     shutil.copy(file_name, out_dir)
 
   if os.environ.get('CARGO') != None:
-    print("cargo:rustc-link-search=native=" + os.path.join(os.path.abspath('build'), 'Debug' if args.debug else 'Release'))
+    print("cargo:rustc-link-search=native=" + os.path.join(os.path.abspath('out'), 'Debug' if args.debug else 'Release'))
 
 def build(args):
   os_name = platform.system()
@@ -203,6 +203,28 @@ def build(args):
       log(ERROR, 'make failed')
       return 1
 
+  out_dir = os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release'))
+  if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
+
+  os_name = platform.system()
+  copy_files = []
+  if os_name == 'Windows':
+    if args.debug:
+      copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
+
+    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.lib')))
+    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
+
+  elif os_name == 'Darwin':
+    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
+
+  else:
+    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
+
+  for file_name in copy_files:
+    shutil.copy(file_name, out_dir)
+
   copy_library(args)
 
   log(SUCCESS, 'Successfully built')
@@ -228,7 +250,7 @@ def download(args):
 
             log(MESSAGE, 'Extracting {} {}'.format(asset[u'name'], release[u'tag_name']))
             with tarfile.open(temp_path, 'r') as tf:
-              tf.extractall('build')
+              tf.extractall('out')
 
             copy_library(args)
             log(SUCCESS, 'Successfully downloaded')
@@ -241,6 +263,9 @@ def download(args):
   return 1
 
 def clean(args):
+  if os.path.exists('out'):
+    shutil.rmtree('out')
+
   if os.path.exists('build'):
     shutil.rmtree('build')
 
@@ -274,10 +299,14 @@ def main():
     if download(args) != 0:
       log(WARNING, "couldn't find prebuilt for {} v{}".format(args.target, args.version))
   elif (args.action == 'downloadOrBuild'):
-    if download(args) != 0:
-      log(WARNING, "no prebuilts available for {} v{} - building from source".format(args.target, args.version))
-
+    if not os.path.exists('build'):
+      if download(args) != 0:
+        log(WARNING, "no prebuilts available for {} v{} - building from source".format(args.target, args.version))
+        return build(args)
+    else:
+      log(WARNING, "local build found, skipping download")
       return build(args)
+
     return 0
   elif (args.action == 'clean'):
     return clean(args)

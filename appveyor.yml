@@ -2,12 +2,8 @@ image: macOS
 
 build_script:
   - python ./tools/build.py build --debug
-  - python ./tools/build.py build --release
-
-after_build:
-  - cd build
-  - 7z a ../build.zip Release/libwebrtc-rs.dylib Debug/libwebrtc-rs.dylib
+  - python ./tools/build.py build
 
 artifacts:
-  - path: build.zip
-    name: build
+  - path: out
+    type: zip

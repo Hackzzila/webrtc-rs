@@ -26,6 +26,4 @@ jobs:
           paths:
             - ~/project/deps
       - store_artifacts:
-          path: build/Release/libwebrtc-rs.so
-      - store_artifacts:
-          path: build/Debug/libwebrtc-rs.so
+          path: out

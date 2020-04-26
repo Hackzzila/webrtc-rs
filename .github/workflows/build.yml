@@ -29,8 +29,8 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: ${{ matrix.os }}
-        path: build
+        name: linux
+        path: out
   build-windows:
     runs-on: Windows
     steps:
@@ -58,5 +58,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: ${{ matrix.os }}
-        path: build
+        name: windows
+        path: out

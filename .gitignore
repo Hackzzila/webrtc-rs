@@ -6,5 +6,6 @@ deps/webrtc
 deps/depot_tools
 
 build/
+out/
 
 .vscode
