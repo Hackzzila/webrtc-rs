@@ -3,19 +3,41 @@ name: build
 on: [push]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [Windows, Linux]
+  build-linux:
+    runs-on: Linux
     steps:
     - uses: actions/checkout@v2
 
-    - name: Setup Build Cache on Linux
+    - name: Setup Build Cache
       if: matrix.os == 'Linux'
       run: mkdir -p ~/actions-cache && ln -s ~/actions-cache ./deps
 
-    - name: Setup Build Cache on Windows
+    - name: Build C++ Debug
+      run: python ./tools/build.py build --debug
+
+    - name: Build C++ Release
+      run: python ./tools/build.py build --debug
+
+    - name: Build Rust Debug
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+    - name: Build Rust Release
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ matrix.os }}
+        path: build
+  build-windows:
+    runs-on: Windows
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Build Cache
       if: matrix.os == 'Windows'
       run: mklink /D .\deps C:\actions-cache
       shell: cmd
@@ -35,11 +57,6 @@ jobs:
       with:
         command: build
         args: --release
-    # - name: Test
-    #   uses: actions-rs/cargo@v1
-    #   with:
-    #     command: test
-    #     args: --release --workspace
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
       with:
