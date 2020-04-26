@@ -19,7 +19,7 @@ jobs:
           name: "Rust Debug Build"
           command: cargo build
       - run:
-            name: "Rust Release Build"
+          name: "Rust Release Build"
           command: cargo build --release
       - save_cache:
           key: webrtc
