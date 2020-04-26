@@ -68,11 +68,7 @@ def copy_library(args):
     shutil.copy(file_name, out_dir)
 
   if os.environ.get('CARGO') != None:
-    os_name = platform.system()
-    build_dir = os.path.abspath('build')
-    if os_name == 'Windows':
-      build_dir = os.path.join(build_dir, 'Debug' if args.debug else 'Release')
-    print("cargo:rustc-link-search=native=" + build_dir)
+    print("cargo:rustc-link-search=native=" + os.path.join(os.path.abspath('build'), 'Debug' if args.debug else 'Release'))
 
 def build(args):
   os_name = platform.system()
