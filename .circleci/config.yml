@@ -3,6 +3,8 @@ jobs:
   build:
     docker:
       - image: hackzzila/webrtc-env:latest
+        environment:
+          TAR_OPTIONS: --no-same-owner
     steps:
       - checkout
       - restore_cache:
