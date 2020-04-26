@@ -9,7 +9,6 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Setup Build Cache
-      if: matrix.os == 'Linux'
       run: mkdir -p ~/actions-cache && ln -s ~/actions-cache ./deps
 
     - name: Build C++ Debug
@@ -38,7 +37,6 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Setup Build Cache
-      if: matrix.os == 'Windows'
       run: mklink /D .\deps C:\actions-cache
       shell: cmd
 
