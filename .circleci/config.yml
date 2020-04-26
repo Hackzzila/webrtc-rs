@@ -12,7 +12,20 @@ jobs:
       - run:
           name: "C++ Debug Build"
           command: python ./tools/build.py build --debug
+      - run:
+          name: "C++ Release Build"
+          command: python ./tools/build.py build --debug
+      - run:
+          name: "Rust Debug Build"
+          command: cargo build
+      - run:
+            name: "Rust Release Build"
+          command: cargo build --release
       - save_cache:
           key: webrtc
           paths:
             - ~/project/deps
+      - store_artifacts:
+          path: build/Release/libwebrtc-rs.so
+      - store_artifacts:
+          path: build/Debug/libwebrtc-rs.so

@@ -59,12 +59,11 @@ def copy_library(args):
     copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
 
   elif os_name == 'Darwin':
-    copy_files.append(os.path.abspath(os.path.join('build', 'libwebrtc-rs.dylib')))
+    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
 
   else:
-    copy_files.append(os.path.abspath(os.path.join('build', 'libwebrtc-rs.so')))
+    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
 
-  # print(copy_files)
   for file_name in copy_files:
     shutil.copy(file_name, out_dir)
 
@@ -76,7 +75,7 @@ def copy_library(args):
     print("cargo:rustc-link-search=native=" + build_dir)
 
 def build(args):
-  os_name = platform.system();
+  os_name = platform.system()
   use_shell = os_name == 'Windows'
 
   if not os.path.exists('deps/webrtc'):
@@ -152,10 +151,7 @@ def build(args):
 
     log(MESSAGE, 'WebRTC up to date')
 
-  out_dir = "out/Release"
-  if args.debug:
-    out_dir = "out/Debug"
-
+  out_dir = "out/Debug" if args.debug else "out/Release"
   gn_args = [
     'rtc_build_examples=false',
     'rtc_include_pulse_audio=false',
