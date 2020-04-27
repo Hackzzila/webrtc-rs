@@ -30,7 +30,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: linux
-        path: out
+        path: out/x86_64-unknown-linux-gnu
   build-windows:
     runs-on: Windows
     steps:
@@ -59,4 +59,4 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: windows
-        path: out
+        path: out/x86_64-pc-windows-msvc

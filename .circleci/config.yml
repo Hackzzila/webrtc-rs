@@ -26,4 +26,4 @@ jobs:
           paths:
             - ~/project/deps
       - store_artifacts:
-          path: out
+          path: out/x86_64-unknown-linux-gnu

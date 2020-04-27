@@ -11,7 +11,7 @@ import argparse
 import json
 import tarfile
 import time
-import threading
+import re
 
 try:
     from urllib.request import urlopen, urlretrieve, Request
@@ -42,8 +42,68 @@ def log(level, message):
   else:
     print(level + message + ENDC)
 
+def ensure_target(triplet):
+  arr = triplet.split('-')
+  if arr[0] not in ['x86_64', 'aarch64']:
+    log(ERROR, 'unsupported target "{}"'.format(triplet))
+    sys.exit(1)
+
+  if arr[2] not in ['windows', 'linux', 'darwin', 'ios', 'android']:
+    log(ERROR, 'unsupported target "{}"'.format(triplet))
+    sys.exit(1)
+
+  if len(arr) >= 4:
+    if arr[0] == 'windows' and arr[3] == 'msvc':
+      pass
+    elif arr[0] == 'linux' and arr[3] == 'gnu':
+      pass
+    else:
+      log(ERROR, 'unsupported target "{}"'.format(triplet))
+      sys.exit(1)
+
+def triplet_to_gn_args(target):
+  arr = target.split('-')
+  args = []
+
+  if arr[0] == 'x86_64':
+    args.append('target_cpu="x64"')
+  elif arr[0] == 'aarch64':
+    args.append('target_cpu="arm64"')
+  else:
+    log(ERROR, 'unsupported target "{}"'.format(target))
+    sys.exit(1)
+
+  if arr[2] == 'windows':
+    args.append('target_os="win"')
+  elif arr[2] == 'linux':
+    args.append('target_os="unix"')
+  elif arr[2] == 'darwin':
+    args.append('target_os="mac"')
+  elif arr[2] == 'ios':
+    args.append('target_os="ios"')
+  elif arr[2] == 'android':
+    args.append('target_os="android"')
+  else:
+    log(ERROR, 'unsupported target "{}"'.format(target))
+    sys.exit(1)
+
+  return args
+
+def triplet_to_cmake_args(target_str):
+  target = target_str.split('-')
+  args = [ '-DTARGET_TRIPLET={}'.format(target_str) ]
+
+  if target[2] == 'ios':
+    args.extend(['-G', 'Xcode', '-DCMAKE_TOOLCHAIN_FILE=../../toolchains/iOS.cmake', '-DENABLE_VISIBILITY=TRUE', '-DDEPLOYMENT_TARGET=13.0'])
+    if target[0] == 'x86_64':
+      args.append('-DPLATFORM=SIMULATOR64')
+    elif target[0] == 'aarch64':
+      args.append('-DPLATFORM=OS64')
+
+  return args
+
 def copy_library(args):
-  out_dir = os.path.abspath(os.path.join('target', 'debug' if args.debug else 'release'))
+  out_dir = os.path.abspath(os.path.join('target', args.target if args.target != default_target else '', 'debug' if args.debug else 'release'))
   if (os.environ.get('OUT_DIR') != None):
     out_dir = os.path.normpath(os.path.join(os.environ.get('OUT_DIR'), '..', '..', '..'))
 
@@ -54,21 +114,21 @@ def copy_library(args):
   copy_files = []
   if os_name == 'Windows':
     if args.debug:
-      copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
+      copy_files.append(os.path.abspath(os.path.join('out', args.target, 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
 
-    copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
+    copy_files.append(os.path.abspath(os.path.join('out', args.target, 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
 
   elif os_name == 'Darwin':
-    copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
+    copy_files.append(os.path.abspath(os.path.join('out', args.target, 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
 
   else:
-    copy_files.append(os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
+    copy_files.append(os.path.abspath(os.path.join('out', args.target, 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
 
   for file_name in copy_files:
     shutil.copy(file_name, out_dir)
 
   if os.environ.get('CARGO') != None:
-    print("cargo:rustc-link-search=native=" + os.path.join(os.path.abspath('out'), 'Debug' if args.debug else 'Release'))
+    print("cargo:rustc-link-search=native=" + os.path.join(os.path.abspath('out'), args.target, 'Debug' if args.debug else 'Release'))
 
 def build(args):
   os_name = platform.system()
@@ -117,8 +177,14 @@ def build(args):
         return 1
 
   if not os.path.exists('deps/webrtc/src'):
+    webrtc_repo = "webrtc"
+    if os_name == "Darwin":
+      webrtc_repo = "webrtc_ios"
+    elif os_name == "Linux":
+      webrtc_repo = "webrtc_android"
+
     log(MESSAGE, 'Fetching WebRTC')
-    process = subprocess.Popen(['fetch', '--nohooks', 'webrtc'], cwd='deps/webrtc', shell=use_shell)
+    process = subprocess.Popen(['fetch', '--nohooks', webrtc_repo], cwd='deps/webrtc', shell=use_shell)
     process.wait()
     if process.returncode != 0:
       log(ERROR, 'Failed to fetch WebRTC')
@@ -147,7 +213,7 @@ def build(args):
 
     log(MESSAGE, 'WebRTC up to date')
 
-  out_dir = "out/Debug" if args.debug else "out/Release"
+  out_dir = "out/{}/{}".format(args.target, "Debug" if args.debug else "Release")
   gn_args = [
     'rtc_build_examples=false',
     'rtc_include_pulse_audio=false',
@@ -161,6 +227,8 @@ def build(args):
 
   if os_name == "Windows":
     gn_args.append('is_clang=false')
+
+  gn_args.extend(triplet_to_gn_args(args.target))
 
   if not os.path.exists('deps/webrtc/' + out_dir):
     log(MESSAGE, 'Running GN')
@@ -177,33 +245,37 @@ def build(args):
     log(ERROR, 'Ninja failed')
     return 1
 
-  if not os.path.exists('build'):
-    os.makedirs('build')
+  build_dir = 'build/' + args.target
+  if not os.path.exists(build_dir):
+    os.makedirs(build_dir)
+
+  build_type = "Debug" if args.debug else "Release"
+  cmake_args = ['cmake', '-DCMAKE_BUILD_TYPE={}'.format(build_type), '../..']
+  cmake_args.extend(triplet_to_cmake_args(args.target))
 
   log(MESSAGE, 'Running CMake')
-  build_type = "Debug" if args.debug else "Release"
-  process = subprocess.Popen(['cmake', '-DCMAKE_BUILD_TYPE={}'.format(build_type), '..'], cwd='build', shell=use_shell)
+  process = subprocess.Popen(cmake_args, cwd=build_dir, shell=use_shell)
   process.wait()
   if process.returncode != 0:
     log(ERROR, 'CMake failed')
     return 1
 
-  if os_name == 'Windows':
-    log(MESSAGE, 'Running CMake build')
-    process = subprocess.Popen(['cmake', '--build', '.', '--config', build_type], cwd='build', shell=use_shell)
-    process.wait()
-    if process.returncode != 0:
-      log(ERROR, 'CMake build failed')
-      return 1
-  else:
-    log(MESSAGE, 'Running make')
-    process = subprocess.Popen(['make'], cwd='build', shell=use_shell)
-    process.wait()
-    if process.returncode != 0:
-      log(ERROR, 'make failed')
-      return 1
+  # if os_name == 'Windows':
+  log(MESSAGE, 'Running CMake build')
+  process = subprocess.Popen(['cmake', '--build', '.', '--config', build_type], cwd=build_dir, shell=use_shell)
+  process.wait()
+  if process.returncode != 0:
+    log(ERROR, 'CMake build failed')
+    return 1
+  # else:
+  #   log(MESSAGE, 'Running make')
+  #   process = subprocess.Popen(['cmake'], cwd='build', shell=use_shell)
+  #   process.wait()
+  #   if process.returncode != 0:
+  #     log(ERROR, 'make failed')
+  #     return 1
 
-  out_dir = os.path.abspath(os.path.join('out', 'Debug' if args.debug else 'Release'))
+  out_dir = os.path.abspath(os.path.join('out', args.target, 'Debug' if args.debug else 'Release'))
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
@@ -211,16 +283,16 @@ def build(args):
   copy_files = []
   if os_name == 'Windows':
     if args.debug:
-      copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
+      copy_files.append(os.path.abspath(os.path.join('build', args.target, 'Debug' if args.debug else 'Release', 'webrtc-rs.pdb')))
 
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.lib')))
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
+    copy_files.append(os.path.abspath(os.path.join('build', args.target, 'Debug' if args.debug else 'Release', 'webrtc-rs.lib')))
+    copy_files.append(os.path.abspath(os.path.join('build', args.target, 'Debug' if args.debug else 'Release', 'webrtc-rs.dll')))
 
   elif os_name == 'Darwin':
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
+    copy_files.append(os.path.abspath(os.path.join('build', args.target, 'Debug' if args.debug else 'Release', 'libwebrtc-rs.dylib')))
 
   else:
-    copy_files.append(os.path.abspath(os.path.join('build', 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
+    copy_files.append(os.path.abspath(os.path.join('build', args.target, 'Debug' if args.debug else 'Release', 'libwebrtc-rs.so')))
 
   for file_name in copy_files:
     shutil.copy(file_name, out_dir)
@@ -293,13 +365,22 @@ def main():
 
   args = parser.parse_args()
 
+  global default_target
+  process = subprocess.Popen(['rustc', '--version', '--verbose'], stdout=subprocess.PIPE, shell=True if platform.system() == "Windows" else False)
+  out, err = process.communicate()
+  default_target = re.compile(r"host:\s*(.+)").search(out).group(1)
+  if not args.target:
+    args.target = default_target
+
+  ensure_target(args.target)
+
   if (args.action == 'build'):
     return build(args)
   elif (args.action == 'download'):
     if download(args) != 0:
       log(WARNING, "couldn't find prebuilt for {} v{}".format(args.target, args.version))
   elif (args.action == 'downloadOrBuild'):
-    if not os.path.exists('build'):
+    if not os.path.exists('build/' + args.target):
       if download(args) != 0:
         log(WARNING, "no prebuilts available for {} v{} - building from source".format(args.target, args.version))
         return build(args)
