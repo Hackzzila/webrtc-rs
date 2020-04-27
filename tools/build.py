@@ -53,9 +53,9 @@ def ensure_target(triplet):
     sys.exit(1)
 
   if len(arr) >= 4:
-    if arr[0] == 'windows' and arr[3] == 'msvc':
+    if arr[2] == 'windows' and arr[3] == 'msvc':
       pass
-    elif arr[0] == 'linux' and arr[3] == 'gnu':
+    elif arr[2] == 'linux' and arr[3] == 'gnu':
       pass
     else:
       log(ERROR, 'unsupported target "{}"'.format(triplet))
