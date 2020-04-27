@@ -100,6 +100,13 @@ def triplet_to_cmake_args(target_str):
     elif target[0] == 'aarch64':
       args.append('-DPLATFORM=OS64')
 
+  if target[2] == 'android':
+    args.extend(['-DCMAKE_TOOLCHAIN_FILE={}'.format(os.path.abspath('deps/webrtc/src/third_party/android_ndk/build/cmake/android.toolchain.cmake')), '-DANDROID_NATIVE_API_LEVEL=29', '-DANDROID_STL=none'])
+    if target[0] == 'x86_64':
+      args.append('-DANDROID_ABI=x86_64')
+    elif target[0] == 'aarch64':
+      args.append('-DANDROID_ABI=arm64-v8a')
+
   return args
 
 def copy_library(args):
@@ -229,6 +236,14 @@ def build(args):
     gn_args.append('is_clang=false')
 
   gn_args.extend(triplet_to_gn_args(args.target))
+
+  if 'android' in args.target:
+    log(MESSAGE, 'Setting up Android development environment')
+    process = subprocess.Popen(['.', 'build/android/envsetup.sh'], cwd='deps/webrtc/src', shell=True)
+    process.wait()
+    if process.returncode != 0:
+      log(ERROR, 'Android envsetup failed')
+      return 1
 
   if not os.path.exists('deps/webrtc/' + out_dir):
     log(MESSAGE, 'Running GN')
