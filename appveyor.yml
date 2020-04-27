@@ -1,6 +1,6 @@
 image: macOS
 
-build_script:
+install:
   - curl https://static.rust-lang.org/rustup/archive/1.21.1/x86_64-apple-darwin/rustup-init -o rustup-init
   - chmod +x rustup-init
   - ./rustup-init -y --profile minimal --default-toolchain stable
@@ -10,6 +10,8 @@ build_script:
   - rustup --version
   - cargo --version
   - rustc --version
+
+build_script:
   - python ./tools/build.py build --debug
   - python ./tools/build.py build
   - cargo build

@@ -367,8 +367,8 @@ def main():
 
   global default_target
   process = subprocess.Popen(['rustc', '--version', '--verbose'], stdout=subprocess.PIPE, shell=True if platform.system() == "Windows" else False)
-  out, err = process.communicate()
-  default_target = re.compile(r"host:\s*(.+)").search(out).group(1)
+  out, _ = process.communicate()
+  default_target = re.compile(r"host:\s*(.+)").search(out.decode('utf-8')).group(1)
   if not args.target:
     args.target = default_target
 

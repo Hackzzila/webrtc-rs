@@ -11,6 +11,9 @@ jobs:
     - name: Setup Build Cache
       run: mkdir -p ~/actions-cache && ln -s ~/actions-cache ./deps
 
+    - name: Delete Build Cache If Needed
+      run python tools/ci-cache.py 1 # increment this number to invalidate cache
+
     - name: Build C++ Debug
       run: python ./tools/build.py build --debug
 

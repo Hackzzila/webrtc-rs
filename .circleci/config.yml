@@ -4,7 +4,6 @@ jobs:
     docker:
       - image: hackzzila/webrtc-env:latest
         environment:
-          CACHE_VERSION: v1
           TAR_OPTIONS: --no-same-owner
     steps:
       - checkout
@@ -15,7 +14,7 @@ jobs:
           command: python ./tools/build.py build --debug
       - run:
           name: "C++ Release Build"
-          command: python ./tools/build.py build --debug
+          command: python ./tools/build.py build
       - run:
           name: "Rust Debug Build"
           command: cargo build
