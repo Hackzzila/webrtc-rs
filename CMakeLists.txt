@@ -18,6 +18,7 @@ if(MSVC)
 endif()
 
 add_library(webrtc-rs SHARED
+            src/native/bindings/data_channel.cc
             src/native/bindings/peer_connection_factory.cc
             src/native/bindings/peer_connection.cc
             src/native/bindings/webrtc_rs.cc)

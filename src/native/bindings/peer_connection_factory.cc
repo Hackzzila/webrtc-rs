@@ -11,7 +11,9 @@ extern "C" {
 namespace webrtc_rs {
 
 WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection_factory() {
-  auto network_thread = rtc::Thread::Create().release();
+  rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_WARNING);
+
+  auto network_thread = rtc::Thread::CreateWithSocketServer().release();
   network_thread->Start();
 
   auto worker_thread = rtc::Thread::Create().release();

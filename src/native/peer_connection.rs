@@ -62,14 +62,24 @@ extern {
     success: unsafe extern fn(SetSessionDescriptionObserverSender),
     error: unsafe extern fn(SetSessionDescriptionObserverSender, *const c_char)
   );
+
+  fn webrtc_rs_peer_connection_create_data_channel(
+    peer: *mut c_void,
+    label: *const c_char,
+  ) -> *mut c_void;
+
+  fn webrtc_rs_peer_connection_add_ice_candidate(
+    peer: *mut c_void,
+    candidate: *mut internal::RTCIceCandidateInit,
+  ) -> *mut internal::SdpParseError;
 }
 
-pub struct RTCPeerConnection {
+pub struct RTCPeerConnection<'a> {
   pub(crate) ptr: *mut c_void,
-  pub(crate) observer_ptr: *mut Box<dyn Observer>,
+  pub(crate) observer_ptr: *mut Box<&'a dyn RTCPeerConnectionObserver>,
 }
 
-impl RTCPeerConnection {
+impl<'a> RTCPeerConnection<'a> {
   pub async fn create_offer(&self) -> Result<RTCSessionDescription, String> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let boxed = Box::new(tx);
@@ -151,9 +161,67 @@ impl RTCPeerConnection {
 
     rx.await.map_err(|x| x.to_string())?
   }
+
+  pub fn create_data_channel(&self, label: &str) -> RTCDataChannel {
+    let c_string = CString::new(label).unwrap();
+    let c_ptr = c_string.as_ptr();
+
+    RTCDataChannel {
+      ptr: unsafe {
+        webrtc_rs_peer_connection_create_data_channel(self.ptr, c_ptr)
+      },
+      observer_ptr: None,
+      c_observer_ptr: std::ptr::null_mut(),
+    }
+  }
+
+  pub fn add_ice_candidate<'b>(&self, candidate: &'b dyn IceCandidateCommon) -> Result<(), SdpParseError> {
+    let mut c_strings = Vec::new();
+
+    let internal_candidate = Box::new(internal::RTCIceCandidateInit::from_with_cleanup(candidate, &mut c_strings));
+    let internal_candidate_ptr = Box::into_raw(internal_candidate);
+
+    let err = unsafe {
+      webrtc_rs_peer_connection_add_ice_candidate(
+        self.ptr,
+        internal_candidate_ptr,
+      )
+    };
+
+    unsafe { Box::from_raw(internal_candidate_ptr ); }
+
+    for c_string in c_strings {
+      unsafe {
+        CString::from_raw(c_string);
+      }
+    }
+
+    if err != std::ptr::null_mut() {
+      let line = unsafe {
+        let len = libc::strlen((*err).line);
+        std::slice::from_raw_parts_mut((*err).line as *mut u8, len)
+      };
+      let line = std::str::from_utf8_mut(line).unwrap();
+
+      let description = unsafe {
+        let len = libc::strlen((*err).description);
+        std::slice::from_raw_parts_mut((*err).description as *mut u8, len)
+      };
+      let description = std::str::from_utf8_mut(description).unwrap();
+
+      unsafe {
+        internal::delete((*err).line as *mut c_void);
+        internal::delete((*err).description as *mut c_void);
+      }
+
+      Err(SdpParseError { line: line.to_string(), description: description.to_string() })
+    } else {
+      Ok(())
+    }
+  }
 }
 
-impl Drop for RTCPeerConnection {
+impl<'a> Drop for RTCPeerConnection<'a> {
   fn drop(&mut self) {
     unsafe {
       webrtc_rs_release_peer_connection(self.ptr);

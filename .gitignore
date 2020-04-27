@@ -1,11 +1,9 @@
 /target
+/deps
+/build
+/out
+/pkg
 
 Cargo.lock
-
-deps/webrtc
-deps/depot_tools
-
-build/
-out/
 
 .vscode

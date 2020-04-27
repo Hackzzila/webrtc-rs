@@ -1,4 +1,6 @@
-#[derive(Debug, Clone)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[repr(i32)]
 pub enum RTCSdpType {
   Offer,
@@ -7,7 +9,7 @@ pub enum RTCSdpType {
   Rollback,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RTCSessionDescription {
   pub r#type: RTCSdpType,
   pub sdp: String,

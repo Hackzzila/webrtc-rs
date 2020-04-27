@@ -13,7 +13,7 @@ impl RTCPeerConnectionFactory {
     Self { }
   }
 
-  pub fn create_peer_connection(&self, config: RTCConfiguration, ob: Box<dyn Observer>) -> RTCPeerConnection {
+  pub fn create_peer_connection(&self, config: RTCConfiguration, ob: Box<dyn RTCPeerConnectionObserver>) -> RTCPeerConnection {
     let peer = RTCPeerConnection {
       internal: Rc::new(web_sys::RtcPeerConnection::new_with_configuration(&web_sys::RtcConfiguration::from(config)).expect("failed to construct RTCPeerConnection")),
     };

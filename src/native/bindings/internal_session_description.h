@@ -3,8 +3,6 @@
 
 #include "api/jsep.h"
 
-#include "internal_rtc_ice_server.h"
-
 namespace webrtc_rs {
 
 namespace internal {
