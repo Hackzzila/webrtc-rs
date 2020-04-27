@@ -6,7 +6,7 @@ environment:
   PATH: /usr/local/cargo/bin:$PATH
   RUST_VERSION: '1.43.0'
 
-install:
+before_build:
   - wget https://static.rust-lang.org/rustup/archive/1.21.1/${rustArch}/rustup-init
   - chmod +x rustup-init
   - ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION
