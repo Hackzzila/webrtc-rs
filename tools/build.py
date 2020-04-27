@@ -76,7 +76,7 @@ def triplet_to_gn_args(target):
   if arr[2] == 'windows':
     args.append('target_os="win"')
   elif arr[2] == 'linux':
-    args.append('target_os="unix"')
+    args.append('target_os="linux"')
   elif arr[2] == 'darwin':
     args.append('target_os="mac"')
   elif arr[2] == 'ios':
