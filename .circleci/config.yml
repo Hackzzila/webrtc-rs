@@ -4,6 +4,7 @@ jobs:
     docker:
       - image: hackzzila/webrtc-env:latest
         environment:
+          CACHE_VERSION: v1
           TAR_OPTIONS: --no-same-owner
     steps:
       - checkout
@@ -22,7 +23,7 @@ jobs:
           name: "Rust Release Build"
           command: cargo build --release
       - save_cache:
-          key: webrtc
+          key: webrtc-{{ .Environment.CACHE_VERSION }}
           paths:
             - ~/project/deps
       - store_artifacts:
