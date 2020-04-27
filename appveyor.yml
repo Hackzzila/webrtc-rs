@@ -1,17 +1,12 @@
 image: macOS
 
-environment:
-  RUSTUP_HOME: /usr/local/rustup
-  CARGO_HOME: /usr/local/cargo
-  RUST_VERSION: '1.43.0'
-
 build_script:
-  - export PATH="/usr/local/cargo/bin:$PATH"
   - curl https://static.rust-lang.org/rustup/archive/1.21.1/x86_64-apple-darwin/rustup-init -o rustup-init
   - chmod +x rustup-init
-  - RUSTUP_HOME="/usr/local/rustup" CARGO_HOME="/usr/local/cargo" sudo ./rustup-init -y --profile minimal --default-toolchain $RUST_VERSION
+  - ./rustup-init -y --profile minimal --default-toolchain stable
   - rm rustup-init
-  - chmod -R a+w $RUSTUP_HOME $CARGO_HOME
+  - chmod -R a+w $HOME/.cargo $HOME/.rustup
+  - source $HOME/.cargo/env
   - rustup --version
   - cargo --version
   - rustc --version
