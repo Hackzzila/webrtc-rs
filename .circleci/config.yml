@@ -9,7 +9,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: webrtc
+          key: webrtc-{{ .Environment.CACHE_VERSION }}
       - run:
           name: "C++ Debug Build"
           command: python ./tools/build.py build --debug
