@@ -41,4 +41,4 @@ workflows:
           name: build-<< matrix.target >>
           matrix:
             parameters:
-              target: ["x86_64-unknown-linux", "x86_64-linux-android", "aarch64-linux-android"]
+              target: ["x86_64-unknown-linux-gnu", "x86_64-linux-android", "aarch64-linux-android"]
