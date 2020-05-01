@@ -11,6 +11,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release")
 
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO")
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
+
 project(webrtc-rs)
 
 if(MSVC)
@@ -57,113 +60,135 @@ if(WIN32)
 else()
   set(libwebrtc_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc)
 
-  set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++/trunk/include")
-  set(libc++abi_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++abi/trunk/include")
+  if(NOT IOS)
+    set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++/trunk/include")
+    set(libc++abi_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++abi/trunk/include")
 
-  # libc++
-  # -----------------------------------------------------------------------------
+    # libc++
+    # -----------------------------------------------------------------------------
 
-  set(libwebrtc_binary_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${TARGET_TRIPLET}/${CMAKE_BUILD_TYPE})
-  set(libwebrtc_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc)
+    set(libwebrtc_binary_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${TARGET_TRIPLET}/${CMAKE_BUILD_TYPE})
+    set(libwebrtc_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc)
 
-  add_library(libc++ OBJECT IMPORTED)
-  add_dependencies(libc++ libwebrtc)
+    add_library(libc++ OBJECT IMPORTED)
+    add_dependencies(libc++ libwebrtc)
 
-  # set(libc++_objects
-  #   # algorithm.o
-  #   # any.o
-  #   # bind.o
-  #   # chrono.o
-  #   # condition_variable.o
-  #   # debug.o
-  #   # exception.o
-  #   # functional.o
-  #   # future.o
-  #   # hash.o
-  #   # ios.o
-  #   # iostream.o
-  #   # locale.o
-  #   # memory.o
-  #   # mutex.o
-  #   # new.o
-  #   # optional.o
-  #   # random.o
-  #   # regex.o
-  #   # shared_mutex.o
-  #   # stdexcept.o
-  #   # string.o
-  #   # strstream.o
-  #   # system_error.o
-  #   # thread.o
-  #   # typeinfo.o
-  #   # utility.o
-  #   # valarray.o
-  #   # variant.o
-  #   # vector.o
-  # )
-  # list(TRANSFORM libc++_objects PREPEND ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++/libc++/)
+    # set(libc++_objects
+    #   # algorithm.o
+    #   # any.o
+    #   # bind.o
+    #   # chrono.o
+    #   # condition_variable.o
+    #   # debug.o
+    #   # exception.o
+    #   # functional.o
+    #   # future.o
+    #   # hash.o
+    #   # ios.o
+    #   # iostream.o
+    #   # locale.o
+    #   # memory.o
+    #   # mutex.o
+    #   # new.o
+    #   # optional.o
+    #   # random.o
+    #   # regex.o
+    #   # shared_mutex.o
+    #   # stdexcept.o
+    #   # string.o
+    #   # strstream.o
+    #   # system_error.o
+    #   # thread.o
+    #   # typeinfo.o
+    #   # utility.o
+    #   # valarray.o
+    #   # variant.o
+    #   # vector.o
+    # )
+    # list(TRANSFORM libc++_objects PREPEND ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++/libc++/)
 
-  file(GLOB libc++_objects ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++/libc++/*.o)
+    file(GLOB libc++_objects ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++/libc++/*.o)
 
-  set_property(TARGET libc++ APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
-  set_target_properties(libc++ PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++_objects}" IMPORTED_OBJECTS "${libc++_objects}")
+    set_property(TARGET libc++ APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+    set_target_properties(libc++ PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++_objects}" IMPORTED_OBJECTS "${libc++_objects}")
 
-  # NOTE(mroberts): I would like this to be INTERFACE.
-  #
-  #   https://gitlab.kitware.com/cmake/cmake/issues/15052
-  #
-  # target_include_directories(libc++ SYSTEM INTERFACE "${libc++_include_dir}")
+    # NOTE(mroberts): I would like this to be INTERFACE.
+    #
+    #   https://gitlab.kitware.com/cmake/cmake/issues/15052
+    #
+    # target_include_directories(libc++ SYSTEM INTERFACE "${libc++_include_dir}")
 
-  # libc++abi
-  # -----------------------------------------------------------------------------
+    # libc++abi
+    # -----------------------------------------------------------------------------
 
-  add_library(libc++abi OBJECT IMPORTED)
-  add_dependencies(libc++abi libwebrtc)
+    add_library(libc++abi OBJECT IMPORTED)
+    add_dependencies(libc++abi libwebrtc)
 
-  # set(libc++abi_objects
-  #   abort_message.o
-  #   cxa_aux_runtime.o
-  #   cxa_default_handlers.o
-  #   cxa_demangle.o
-  #   cxa_exception.o
-  #   cxa_exception_storage.o
-  #   cxa_guard.o
-  #   cxa_handlers.o
-  #   cxa_personality.o
-  #   cxa_unexpected.o
-  #   cxa_vector.o
-  #   cxa_virtual.o
-  #   fallback_malloc.o
-  #   private_typeinfo.o
-  #   stdlib_exception.o
-  #   stdlib_stdexcept.o
-  #   stdlib_typeinfo.o
-  # )
-  # list(TRANSFORM libc++abi_objects PREPEND ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++abi/libc++abi/)
+    # set(libc++abi_objects
+    #   abort_message.o
+    #   cxa_aux_runtime.o
+    #   cxa_default_handlers.o
+    #   cxa_demangle.o
+    #   cxa_exception.o
+    #   cxa_exception_storage.o
+    #   cxa_guard.o
+    #   cxa_handlers.o
+    #   cxa_personality.o
+    #   cxa_unexpected.o
+    #   cxa_vector.o
+    #   cxa_virtual.o
+    #   fallback_malloc.o
+    #   private_typeinfo.o
+    #   stdlib_exception.o
+    #   stdlib_stdexcept.o
+    #   stdlib_typeinfo.o
+    # )
+    # list(TRANSFORM libc++abi_objects PREPEND ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++abi/libc++abi/)
 
-  file(GLOB libc++abi_objects ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++abi/libc++abi/*.o)
+    file(GLOB libc++abi_objects ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++abi/libc++abi/*.o)
 
-  set_property(TARGET libc++abi APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
-  set_target_properties(libc++abi PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++abi_objects}" IMPORTED_OBJECTS "${libc++abi_objects}")
+    set_property(TARGET libc++abi APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+    set_target_properties(libc++abi PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++abi_objects}" IMPORTED_OBJECTS "${libc++abi_objects}")
 
-  # NOTE(mroberts): Workaround for
-  #
-  #   https://gitlab.kitware.com/cmake/cmake/issues/15052
-  #
-  # is to include all the header files here.
-  target_include_directories(webrtc-rs SYSTEM PRIVATE
-    ${libc++_include_dir}
-    ${libc++abi_include_dir}
-  )
+    # NOTE(mroberts): Workaround for
+    #
+    #   https://gitlab.kitware.com/cmake/cmake/issues/15052
+    #
+    # is to include all the header files here.
+    target_include_directories(webrtc-rs SYSTEM PRIVATE
+      ${libc++_include_dir}
+      ${libc++abi_include_dir}
+    )
 
-  # NOTE(mroberts): On Linux and macOS, we statically link the same libc++ and
-  # libc++abi libraries that libwebrtc builds against.
-  target_link_libraries(webrtc-rs PRIVATE
-    -lc
-    -lm
-    libc++
-    libc++abi
-  )
+    # NOTE(mroberts): On Linux and macOS, we statically link the same libc++ and
+    # libc++abi libraries that libwebrtc builds against.
+    target_link_libraries(webrtc-rs PRIVATE
+      -lc
+      -lm
+      libc++
+      libc++abi
+    )
+  else()
+    set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++/trunk/include")
+    set(libc++abi_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++abi/trunk/include")
+
+    set(libwebrtc_binary_dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/webrtc/out/${TARGET_TRIPLET}/${CMAKE_BUILD_TYPE})
+    file(GLOB libc++_objects ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++/libc++/*.o)
+
+    file(GLOB libc++abi_objects ${libwebrtc_binary_dir}/obj/buildtools/third_party/libc++abi/libc++abi/*.o)
+
+    target_sources(webrtc-rs PRIVATE ${libc++_objects} ${libc++abi_objects})
+  
+    target_include_directories(webrtc-rs SYSTEM PRIVATE
+      ${libc++_include_dir}
+      ${libc++abi_include_dir}
+    )
+
+    target_link_libraries(webrtc-rs PRIVATE
+      -lc
+      -lm
+    )
+  endif()
 
   target_compile_options(webrtc-rs PRIVATE
     -fno-rtti
@@ -191,14 +216,6 @@ else()
   endif()
 
   if(APPLE)
-    target_link_libraries(webrtc-rs PRIVATE
-      # "-framework AppKit"
-      # "-framework AVFoundation
-      "-framework Cocoa"
-      "-framework CoreAudio"
-      "-framework AudioToolbox"
-    )
-
     target_compile_options(webrtc-rs PRIVATE
       -Weverything
       -Wno-c++98-compat
@@ -218,12 +235,28 @@ else()
     )
 
     if(IOS)
+      target_link_libraries(webrtc-rs PRIVATE
+        "-framework UIKit"
+        "-framework AVFoundation"
+        "-framework Foundation"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+      )
+
       target_compile_definitions(webrtc-rs PRIVATE
         -D_LIBCPP_ABI_UNSTABLE
         -DWEBRTC_MAC
         -DWEBRTC_IOS
       )
     else()
+      target_link_libraries(webrtc-rs PRIVATE
+        # "-framework AppKit"
+        # "-framework AVFoundation
+        "-framework Cocoa"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+      )
+
       target_compile_definitions(webrtc-rs PRIVATE
         -D_LIBCPP_ABI_UNSTABLE
         -DWEBRTC_MAC

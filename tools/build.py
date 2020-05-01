@@ -94,7 +94,7 @@ def triplet_to_cmake_args(target_str):
   args = [ '-DTARGET_TRIPLET={}'.format(target_str) ]
 
   if target[2] == 'ios':
-    args.extend(['-G', 'Xcode', '-DCMAKE_TOOLCHAIN_FILE=../../toolchains/iOS.cmake', '-DENABLE_VISIBILITY=TRUE', '-DDEPLOYMENT_TARGET=13.0'])
+    args.extend(['-G', 'Xcode', '-DCMAKE_TOOLCHAIN_FILE=../../toolchains/iOS.cmake', '-DENABLE_VISIBILITY=TRUE', '-DDEPLOYMENT_TARGET=13.0', '-DENABLE_BITCODE=FALSE'])
     if target[0] == 'x86_64':
       args.append('-DPLATFORM=SIMULATOR64')
     elif target[0] == 'aarch64':
@@ -233,6 +233,7 @@ def build(args):
     'rtc_include_pulse_audio=false',
     'rtc_include_tests=false',
     'rtc_build_tools=false',
+    'ios_enable_code_signing=false'
   ]
   if args.debug:
     gn_args.append('is_debug=true')
