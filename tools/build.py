@@ -134,6 +134,13 @@ def copy_library(args):
   for file_name in copy_files:
     shutil.copy(file_name, out_dir)
 
+  out_dir = os.path.join(out_dir, 'examples')
+  if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
+
+  for file_name in copy_files:
+    shutil.copy(file_name, out_dir)
+
   if os.environ.get('CARGO') != None:
     print("cargo:rustc-link-search=native=" + os.path.join(os.path.abspath('out'), args.target, 'Debug' if args.debug else 'Release'))
 

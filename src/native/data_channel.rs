@@ -1,6 +1,7 @@
 use libc::{c_void};
 
 use crate::*;
+use crate::internal::FromWithCleanupVec;
 
 unsafe extern fn data_channel_observer_on_state_change(ob: *mut Box<dyn RTCDataChannelObserver>, state_num: i32) {
   let observer = Box::from_raw(ob);
@@ -13,6 +14,12 @@ unsafe extern fn data_channel_observer_on_state_change(ob: *mut Box<dyn RTCDataC
   Box::into_raw(observer);
 }
 
+unsafe extern fn data_channel_observer_on_message(ob: *mut Box<dyn RTCDataChannelObserver>, data: internal::DataBuffer) {
+  let observer = Box::from_raw(ob);
+  observer.on_message(Message::from(data));
+  Box::into_raw(observer);
+}
+
 #[link(name = "webrtc-rs")]
 extern {
   fn webrtc_rs_release_data_channel(dc: *mut c_void);
@@ -21,9 +28,14 @@ extern {
     dc: *mut c_void,
     ob: *mut Box<dyn RTCDataChannelObserver>,
     on_state_change: unsafe extern fn(*mut Box<dyn RTCDataChannelObserver>, i32),
+    on_message: unsafe extern fn(*mut Box<dyn RTCDataChannelObserver>, internal::DataBuffer),
   ) -> *mut c_void;
   fn webrtc_rs_data_channel_unregister_observer(dc: *mut c_void, cob: *mut c_void);
 
+  fn webrtc_rs_data_channel_send(dc: *mut c_void, msg: internal::DataBuffer);
+  fn webrtc_rs_data_channel_close(dc: *mut c_void);
+
+  fn webrtc_rs_data_channel_get_ready_state(dc: *mut c_void) -> i32;
 }
 
 pub struct RTCDataChannel {
@@ -42,7 +54,7 @@ impl RTCDataChannel {
     self.observer_ptr = Some(observer_ptr);
 
     unsafe {
-      self.c_observer_ptr = webrtc_rs_data_channel_register_observer(self.ptr, observer_ptr, data_channel_observer_on_state_change);
+      self.c_observer_ptr = webrtc_rs_data_channel_register_observer(self.ptr, observer_ptr, data_channel_observer_on_state_change, data_channel_observer_on_message);
     }
   }
 
@@ -57,6 +69,22 @@ impl RTCDataChannel {
 
     self.observer_ptr = None;
   }
+
+  pub fn send(&self, message: Message) {
+    let (buffer, vec) = internal::DataBuffer::from_with_cleanup_vec(message);
+
+    unsafe {
+      webrtc_rs_data_channel_send(self.ptr, buffer);
+    }
+  }
+
+  pub fn close(&self) {
+    unsafe { webrtc_rs_data_channel_close(self.ptr); }
+  }
+
+  pub fn get_ready_state(&self) -> RTCDataChannelState {
+    RTCDataChannelState::from(unsafe { webrtc_rs_data_channel_get_ready_state(self.ptr) })
+  }
 }
 
 impl Drop for RTCDataChannel {
@@ -64,7 +92,6 @@ impl Drop for RTCDataChannel {
     self.unregister_observer();
     unsafe {
       webrtc_rs_release_data_channel(self.ptr);
-      
     }
   }
 }

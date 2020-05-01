@@ -80,6 +80,7 @@ pub trait IceCandidateCommon {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RTCIceCandidateInit {
   pub candidate: String,
   pub sdp_mid: Option<String>,
@@ -100,20 +101,41 @@ impl IceCandidateCommon for RTCIceCandidateInit {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RTCIceCandidate {
   pub candidate: String,
-  pub component: Option<RTCIceComponent>,
-  pub foundation: Option<String>,
-  pub address: Option<String>,
-  pub port: Option<u16>,
-  pub priority: Option<u32>,
-  pub protocol: Option<RTCIceProtocol>,
-  pub related_address: Option<String>,
-  pub related_port: Option<u16>,
   pub sdp_mid: Option<String>,
   pub sdp_mline_index: Option<u16>,
+
+  #[serde(skip)]
+  pub component: Option<RTCIceComponent>,
+
+  #[serde(skip)]
+  pub foundation: Option<String>,
+
+  #[serde(skip)]
+  pub address: Option<String>,
+
+  #[serde(skip)]
+  pub port: Option<u16>,
+
+  #[serde(skip)]
+  pub priority: Option<u32>,
+
+  #[serde(skip)]
+  pub protocol: Option<RTCIceProtocol>,
+
+  #[serde(skip)]
+  pub related_address: Option<String>,
+
+  #[serde(skip)]
+  pub related_port: Option<u16>,
+  
+  #[serde(skip)]
   pub tcp_type: Option<RTCIceTcpCandidateType>,
+
+  #[serde(skip)]
   pub r#type: Option<RTCIceCandidateType>,
 }
 

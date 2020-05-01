@@ -8,6 +8,7 @@ mod configuration;
 mod data_channel_state;
 mod ice_candidate;
 mod ice_server;
+mod message;
 mod observer;
 mod session_description;
 mod signaling_state;
@@ -35,6 +36,8 @@ pub use ice_candidate::{
 };
 
 pub use ice_server::RTCIceServer;
+
+pub use message::Message;
 
 pub use observer::{RTCPeerConnectionObserver, RTCDataChannelObserver};
 

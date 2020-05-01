@@ -26,14 +26,12 @@ class RTCPeerConnectionObserver : public webrtc::PeerConnectionObserver {
       on_ice_candidate_(on_ice_candidate) { }
 
   void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState state) {
-    std::cout << "OnSignalingChange" << std::endl;
     if (on_signaling_change_) {
       on_signaling_change_(rust_observer_, static_cast<int>(state));
     }
   }
 
   void OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
-    std::cout << "OnDataChannel" << std::endl;
     if (on_data_channel_) {
       on_data_channel_(rust_observer_, data_channel.release());
     }
@@ -48,16 +46,6 @@ class RTCPeerConnectionObserver : public webrtc::PeerConnectionObserver {
   }
 
   void OnIceCandidate(const webrtc::IceCandidateInterface *candidate) {
-    // std::string str;
-    // candidate->ToString(&str);
-
-    std::cout << "OnIceCanidate" << std::endl;
-    // std::cout << candidate->sdp_mid() << std::endl;
-    // std::cout << candidate->sdp_mline_index() << std::endl;
-    // std::cout << str << std::endl;
-
-    // exit(1);
-
     if (on_ice_candidate_) {
       on_ice_candidate_(rust_observer_, internal::RTCIceCandidateInit::From(candidate));
     }
@@ -85,8 +73,6 @@ WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection(void *peer_ptr) {
 WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_offer(void *peer_ptr, void *sender, void(*success)(void *, internal::RTCSessionDescription), void(*error)(void *, const char *)) {
   auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
 
-  std::cout << "sender " << (intptr_t)sender << std::endl;
-
   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
   peer->CreateOffer(new CreateSessionDescriptionObserver(sender, success, error), options);
 }
@@ -113,7 +99,7 @@ WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_set_remote_description(void *pee
 WEBRTC_RS_EXPORT void *webrtc_rs_peer_connection_create_data_channel(void *peer_ptr, char *label) {
   auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
   
-  auto config = new webrtc::DataChannelInit;
+  auto config = new webrtc::DataChannelInit();
   return peer->CreateDataChannel(std::string(label), config).release();
 }
 

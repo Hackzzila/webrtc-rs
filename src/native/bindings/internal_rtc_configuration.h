@@ -18,7 +18,7 @@ struct RTCConfiguration {
   uint16_t *ice_candidate_pool_size;
 
   operator webrtc::PeerConnectionInterface::RTCConfiguration() const {
-    webrtc::PeerConnectionInterface::RTCConfiguration config;
+    auto config = webrtc::PeerConnectionInterface::RTCConfiguration(webrtc::PeerConnectionInterface::RTCConfigurationType::kSafe);
     config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
 
     for (int i = 0; i < this->ice_servers_len; i++) {

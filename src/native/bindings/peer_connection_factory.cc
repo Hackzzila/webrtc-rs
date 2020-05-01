@@ -11,20 +11,18 @@ extern "C" {
 namespace webrtc_rs {
 
 WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection_factory() {
-  rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_WARNING);
+  // auto network_thread = rtc::Thread::CreateWithSocketServer().release();
+  // network_thread->Start();
 
-  auto network_thread = rtc::Thread::CreateWithSocketServer().release();
-  network_thread->Start();
-
-  auto worker_thread = rtc::Thread::Create().release();
-  worker_thread->Start();
+  // auto worker_thread = rtc::Thread::Create().release();
+  // worker_thread->Start();
 
   auto signaling_thread = rtc::Thread::Create().release();
   signaling_thread->Start();
 
   return webrtc::CreatePeerConnectionFactory(
-    network_thread,
-    worker_thread,
+    nullptr,
+    nullptr,
     signaling_thread,
     nullptr,
     webrtc::CreateBuiltinAudioEncoderFactory(),
