@@ -128,3 +128,8 @@ RUN apt-get install -y adwaita-icon-theme ant ant-optional apache2 apache2-bin a
     x11-common x11-utils x11-xkb-utils x11proto-composite-dev x11proto-core-dev x11proto-damage-dev x11proto-dev x11proto-fixes-dev x11proto-input-dev \
     x11proto-randr-dev x11proto-record-dev x11proto-scrnsaver-dev x11proto-xext-dev x11proto-xf86vidmode-dev x11proto-xinerama-dev xcompmgr xdg-user-dirs \
     xfonts-base xfonts-encodings xfonts-utils xkb-data xorg-sgml-doctools xserver-common xsltproc xtrans-dev xutils-dev xvfb zip zlib1g:i386 zlib1g-dev
+
+RUN apt-get install -y openjdk-8-jdk
+RUN update-java-alternatives --set /usr/lib/jvm/java-1.8.0-openjdk-amd64
+
+RUN rustup target add aarch64-linux-android x86_64-linux-android
