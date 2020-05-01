@@ -374,11 +374,27 @@ def clean(args):
 
   return 0
 
+def generate_cargo_config(args):
+  if not os.path.exists('.cargo'):
+    os.makedirs('.cargo')
+
+  f = open('.cargo/config', "w")
+  f.write("""
+[target.aarch64-linux-android]
+ar = "{0}/deps/webrtc/src/third_party/android_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar"
+linker = "{0}/deps/webrtc/src/third_party/android_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android29-clang"
+
+[target.x86_64-linux-android]
+ar = "{0}/deps/webrtc/src/third_party/android_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-ar"
+linker = "{0}/deps/webrtc/src/third_party/android_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android29-clang"
+""".format(os.getcwd()))
+  f.close()
+
 def main():
   if os.environ.get('CARGO_CFG_TARGET_ARCH') == 'wasm32': return 0
 
   parser = argparse.ArgumentParser('build tool for webrtc-rs')
-  parser.add_argument('action', choices=['build', 'download', 'downloadOrBuild', 'clean'])
+  parser.add_argument('action', choices=['build', 'download', 'downloadOrBuild', 'clean', 'generateCargoConfig'])
   parser.add_argument('--debug', action='store_true', default=os.environ.get('PROFILE') == 'debug', help="enables debug build")
   parser.add_argument('--clean-src', action='store_true', help="removes the source code directories for dependencies")
   parser.add_argument('--version', type=str, default=os.environ.get('CARGO_PKG_VERSION'), help="sets the version to download")
@@ -413,6 +429,8 @@ def main():
     return 0
   elif (args.action == 'clean'):
     return clean(args)
+  elif (args.action == 'generateCargoConfig'):
+    return generate_cargo_config(args)
 
 if __name__ == '__main__':
   sys.exit(main())

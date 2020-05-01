@@ -5,6 +5,7 @@
 /pkg
 
 Cargo.lock
+.cargo
 
 .vscode
 .DS_Store
