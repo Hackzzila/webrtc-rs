@@ -1,5 +1,3 @@
-use std::iter::FromIterator;
-
 use crate::*;
 
 impl From<internal::DataBuffer> for Message {

@@ -71,7 +71,7 @@ impl RTCDataChannel {
   }
 
   pub fn send(&self, message: Message) {
-    let (buffer, vec) = internal::DataBuffer::from_with_cleanup_vec(message);
+    let (buffer, _vec) = internal::DataBuffer::from_with_cleanup_vec(message);
 
     unsafe {
       webrtc_rs_data_channel_send(self.ptr, buffer);
