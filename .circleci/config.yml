@@ -23,10 +23,10 @@ jobs:
           command: python ./tools/build.py build --target << parameters.target >>
       - run:
           name: "Rust Debug Build"
-          command: cargo build
+          command: cargo build --target << parameters.target >>
       - run:
           name: "Rust Release Build"
-          command: cargo build --release
+          command: cargo build --release --target << parameters.target >>
       - save_cache:
           key: webrtc-<< parameters.target >>-{{ .Environment.CACHE_VERSION }}
           paths:
