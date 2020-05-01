@@ -11,7 +11,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: webrtc-<< matrix.target >>-{{ .Environment.CACHE_VERSION }}
+          key: webrtc-<< parameters.target >>-{{ .Environment.CACHE_VERSION }}
       - run:
           name: "Generate Cargo Config"
           command: python ./tools/build.py generateCargoConfig
