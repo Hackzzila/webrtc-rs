@@ -8,13 +8,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: webrtc-{{ .Environment.CACHE_VERSION }}
+          key: webrtc-<< matrix.target >>-{{ .Environment.CACHE_VERSION }}
+      - run:
+          name: "Generate Cargo Config"
+          command: python ./tools/build.py generateCargoConfig
       - run:
           name: "C++ Debug Build"
-          command: python ./tools/build.py build --debug
+          command: python ./tools/build.py build --debug --target
       - run:
           name: "C++ Release Build"
-          command: python ./tools/build.py build
+          command: python ./tools/build.py build --target << matrix.target >>
       - run:
           name: "Rust Debug Build"
           command: cargo build
@@ -22,8 +25,17 @@ jobs:
           name: "Rust Release Build"
           command: cargo build --release
       - save_cache:
-          key: webrtc-{{ .Environment.CACHE_VERSION }}
+          key: webrtc-<< matrix.target >>-{{ .Environment.CACHE_VERSION }}
           paths:
             - ~/project/deps
       - store_artifacts:
-          path: out/x86_64-unknown-linux-gnu
+          path: out/<< matrix.target >>
+
+workflows:
+  build:
+    jobs:
+      - build:
+          name: build-<< matrix.target >>
+          matrix:
+            parameters:
+              target: ["x86_64-unknown-linux", "x86_64-linux-android", "aarch64-linux-android"]
