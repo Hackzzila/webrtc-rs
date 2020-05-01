@@ -5,6 +5,9 @@ jobs:
       - image: hackzzila/webrtc-env:latest
         environment:
           TAR_OPTIONS: --no-same-owner
+    parameters:
+      target:
+        type: string
     steps:
       - checkout
       - restore_cache:
@@ -14,10 +17,10 @@ jobs:
           command: python ./tools/build.py generateCargoConfig
       - run:
           name: "C++ Debug Build"
-          command: python ./tools/build.py build --debug --target
+          command: python ./tools/build.py build --debug --target << parameters.target >>
       - run:
           name: "C++ Release Build"
-          command: python ./tools/build.py build --target << matrix.target >>
+          command: python ./tools/build.py build --target << parameters.target >>
       - run:
           name: "Rust Debug Build"
           command: cargo build
@@ -25,11 +28,11 @@ jobs:
           name: "Rust Release Build"
           command: cargo build --release
       - save_cache:
-          key: webrtc-<< matrix.target >>-{{ .Environment.CACHE_VERSION }}
+          key: webrtc-<< parameters.target >>-{{ .Environment.CACHE_VERSION }}
           paths:
             - ~/project/deps
       - store_artifacts:
-          path: out/<< matrix.target >>
+          path: out/<< parameters.target >>
 
 workflows:
   build:
