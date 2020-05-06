@@ -15,6 +15,6 @@ WEBRTC_RS_EXPORT void webrtc_rs_set_log_level(rtc::LoggingSeverity level) {
   rtc::LogMessage::LogToDebug(level);
 }
 
-};
+}
 
 }
