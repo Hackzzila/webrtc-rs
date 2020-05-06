@@ -13,21 +13,23 @@ extern "C" {
 
 namespace webrtc_rs {
 
+struct RustRTCPeerConnectionObserver;
+
 class RTCPeerConnectionObserver : public webrtc::PeerConnectionObserver {
  public:
   RTCPeerConnectionObserver(
-    void *rust_observer,
-    std::function<void(void *, int)> on_signaling_change,
-    std::function<void(void *, void *)> on_data_channel,
-    std::function<void(void *, internal::RTCIceCandidateInit)> on_ice_candidate
-  ) : rust_observer_(rust_observer),
+    RustRTCPeerConnectionObserver *rust_observer,
+    std::function<void(RustRTCPeerConnectionObserver *, webrtc::PeerConnectionInterface::SignalingState)> on_signaling_change,
+    std::function<void(RustRTCPeerConnectionObserver *, webrtc::DataChannelInterface *)> on_data_channel,
+    std::function<void(RustRTCPeerConnectionObserver *, internal::RTCIceCandidateInit)> on_ice_candidate)
+    : rust_observer_(rust_observer),
       on_signaling_change_(on_signaling_change),
       on_data_channel_(on_data_channel),
       on_ice_candidate_(on_ice_candidate) { }
 
   void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState state) {
     if (on_signaling_change_) {
-      on_signaling_change_(rust_observer_, static_cast<int>(state));
+      on_signaling_change_(rust_observer_, state);
     }
   }
 
@@ -52,60 +54,73 @@ class RTCPeerConnectionObserver : public webrtc::PeerConnectionObserver {
   }
 
  private:
-  void *rust_observer_;
-  std::function<void(void *, int)> on_signaling_change_;
-  std::function<void(void *, void *)> on_data_channel_;
-  std::function<void(void *, internal::RTCIceCandidateInit)> on_ice_candidate_;
+  RustRTCPeerConnectionObserver *rust_observer_;
+  std::function<void(RustRTCPeerConnectionObserver *, webrtc::PeerConnectionInterface::SignalingState)> on_signaling_change_;
+  std::function<void(RustRTCPeerConnectionObserver *, webrtc::DataChannelInterface *)> on_data_channel_;
+  std::function<void(RustRTCPeerConnectionObserver *, internal::RTCIceCandidateInit)> on_ice_candidate_;
 };
 
-WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection(void *factory_ptr, void *config_ptr, void *rust_observer, void(*on_signaling_change)(void *, int), void(*on_data_channel)(void *, void *), void(*on_ice_candidate)(void *, internal::RTCIceCandidateInit)) {
-  auto factory = reinterpret_cast<webrtc::PeerConnectionFactoryInterface *>(factory_ptr);
-  auto config = reinterpret_cast<internal::RTCConfiguration *>(config_ptr);
+WEBRTC_RS_EXPORT webrtc::PeerConnectionInterface *webrtc_rs_create_peer_connection(
+    webrtc::PeerConnectionFactoryInterface *factory,
+    internal::RTCConfiguration *config,
+    RustRTCPeerConnectionObserver *rust_observer,
+    void(*on_signaling_change)(RustRTCPeerConnectionObserver *, webrtc::PeerConnectionInterface::SignalingState),
+    void(*on_data_channel)(RustRTCPeerConnectionObserver *, webrtc::DataChannelInterface *),
+    void(*on_ice_candidate)(RustRTCPeerConnectionObserver *, internal::RTCIceCandidateInit)) {
   auto observer = new RTCPeerConnectionObserver(rust_observer, on_signaling_change, on_data_channel, on_ice_candidate);
 
   return factory->CreatePeerConnection(*config, webrtc::PeerConnectionDependencies(observer)).release();
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection(void *peer_ptr) {
-  reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr)->Release();
+WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection(webrtc::PeerConnectionFactoryInterface *peer) {
+  peer->Release();
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_offer(void *peer_ptr, void *sender, void(*success)(void *, internal::RTCSessionDescription), void(*error)(void *, const char *)) {
-  auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
-
+WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_offer(
+    webrtc::PeerConnectionInterface *peer,
+    RustCreateSessionDescriptionObserver *sender,
+    void(*success)(RustCreateSessionDescriptionObserver *, internal::RTCSessionDescription),
+    void(*error)(RustCreateSessionDescriptionObserver *, const char *)) {
   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
   peer->CreateOffer(new CreateSessionDescriptionObserver(sender, success, error), options);
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_answer(void *peer_ptr, void *sender, void(*success)(void *, internal::RTCSessionDescription), void(*error)(void *, const char *)) {
-  auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
-
+WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_create_answer(
+    webrtc::PeerConnectionInterface *peer,
+    RustCreateSessionDescriptionObserver *sender,
+    void(*success)(RustCreateSessionDescriptionObserver *, internal::RTCSessionDescription),
+    void(*error)(RustCreateSessionDescriptionObserver *, const char *)) {
   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
   peer->CreateAnswer(new CreateSessionDescriptionObserver(sender, success, error), options);
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_set_local_description(void *peer_ptr, internal::RTCSessionDescription *desc, void *sender, void(*success)(void *), void(*error)(void *, const char *)) {
-  auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
-
+WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_set_local_description(
+    webrtc::PeerConnectionInterface *peer,
+    internal::RTCSessionDescription *desc,
+    RustSetSessionDescriptionObserver *sender,
+    void(*success)(RustSetSessionDescriptionObserver *),
+    void(*error)(RustSetSessionDescriptionObserver *, const char *)) {
   peer->SetLocalDescription(new SetSessionDescriptionObserver(sender, success, error), *desc);
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_set_remote_description(void *peer_ptr, internal::RTCSessionDescription *desc, void *sender, void(*success)(void *), void(*error)(void *, const char *)) {
-  auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
-
+WEBRTC_RS_EXPORT void webrtc_rs_peer_connection_set_remote_description(
+    webrtc::PeerConnectionInterface *peer,
+    internal::RTCSessionDescription *desc,
+    RustSetSessionDescriptionObserver *sender,
+    void(*success)(RustSetSessionDescriptionObserver *),
+    void(*error)(RustSetSessionDescriptionObserver *, const char *)) {
   peer->SetRemoteDescription(new SetSessionDescriptionObserver(sender, success, error), *desc);
 }
 
-WEBRTC_RS_EXPORT void *webrtc_rs_peer_connection_create_data_channel(void *peer_ptr, char *label) {
-  auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
-  
-  auto config = new webrtc::DataChannelInit();
-  return peer->CreateDataChannel(std::string(label), config).release();
+WEBRTC_RS_EXPORT webrtc::DataChannelInterface *webrtc_rs_peer_connection_create_data_channel(
+    webrtc::PeerConnectionInterface *peer,
+    char *label) {
+  return peer->CreateDataChannel(std::string(label), new webrtc::DataChannelInit()).release();
 }
 
-WEBRTC_RS_EXPORT internal::SdpParseError *webrtc_rs_peer_connection_add_ice_candidate(void *peer_ptr, internal::RTCIceCandidateInit *candidate) {
-  auto peer = reinterpret_cast<webrtc::PeerConnectionInterface *>(peer_ptr);
-  
+WEBRTC_RS_EXPORT internal::SdpParseError *webrtc_rs_peer_connection_add_ice_candidate(
+    webrtc::PeerConnectionInterface *peer,
+    internal::RTCIceCandidateInit *candidate) {
   internal::SdpParseError *error = nullptr;
   auto rtc_candidate = candidate->To(error);
 

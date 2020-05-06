@@ -12,9 +12,17 @@
 
 namespace webrtc_rs {
 
+struct RustCreateSessionDescriptionObserver;
+
 class CreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver {
  public:
-  CreateSessionDescriptionObserver(void *sender, std::function<void(void *, internal::RTCSessionDescription)> success, std::function<void(void *, const char *)> error) : sender_(sender), success_(success), error_(error) { }
+  CreateSessionDescriptionObserver(
+    RustCreateSessionDescriptionObserver *sender,
+    std::function<void(RustCreateSessionDescriptionObserver *, internal::RTCSessionDescription)> success,
+    std::function<void(RustCreateSessionDescriptionObserver *, const char *)> error)
+    : sender_(sender),
+      success_(success),
+      error_(error) { }
 
   void OnSuccess(webrtc::SessionDescriptionInterface *desc) override {
     success_(sender_, internal::RTCSessionDescription::From(desc));
@@ -39,9 +47,9 @@ class CreateSessionDescriptionObserver : public webrtc::CreateSessionDescription
 
  private:
   mutable std::atomic<int> ref_count_{0};
-  void *sender_ = nullptr;
-  std::function<void(void *, internal::RTCSessionDescription)> success_ = nullptr;
-  std::function<void(void *, const char *)> error_ = nullptr;
+  RustCreateSessionDescriptionObserver *sender_ = nullptr;
+  std::function<void(RustCreateSessionDescriptionObserver *, internal::RTCSessionDescription)> success_ = nullptr;
+  std::function<void(RustCreateSessionDescriptionObserver *, const char *)> error_ = nullptr;
 };
 
 };  // namespace webrtc_rs

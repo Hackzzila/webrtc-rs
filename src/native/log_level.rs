@@ -1,5 +1,5 @@
 #[derive(Clone, Debug)]
-#[repr(i32)]
+#[repr(C)]
 pub enum LogLevel {
   Verbose,
   Info,
@@ -10,11 +10,11 @@ pub enum LogLevel {
 
 #[link(name = "webrtc-rs")]
 extern {
-  fn webrtc_rs_set_log_level(level: i32);
+  fn webrtc_rs_set_log_level(level: LogLevel);
 }
 
 pub fn set_log_level(level: LogLevel) {
   unsafe {
-    webrtc_rs_set_log_level(level as i32);
+    webrtc_rs_set_log_level(level);
   }
 }

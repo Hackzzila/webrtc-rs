@@ -13,13 +13,15 @@ extern "C" {
 
 namespace webrtc_rs {
 
+struct RustRTCDataChannelObserver;
+
 class RTCDataChannelObserver : public webrtc::DataChannelObserver {
  public:
   RTCDataChannelObserver(
-    void *rust_observer,
+    RustRTCDataChannelObserver *rust_observer,
     webrtc::DataChannelInterface *data_channel,
-    std::function<void(void *, int)> on_state_change,
-    std::function<void(void *, internal::DataBuffer)> on_message
+    std::function<void(RustRTCDataChannelObserver *, webrtc::DataChannelInterface::DataState)> on_state_change,
+    std::function<void(RustRTCDataChannelObserver *, internal::DataBuffer)> on_message
   ) : rust_observer_(rust_observer),
       data_channel_(data_channel),
       on_state_change_(on_state_change),
@@ -27,7 +29,7 @@ class RTCDataChannelObserver : public webrtc::DataChannelObserver {
 
   void OnStateChange() {
     if (on_state_change_) {
-      on_state_change_(rust_observer_, static_cast<int>(data_channel_->state()));
+      on_state_change_(rust_observer_, data_channel_->state());
     }
   }
 
@@ -40,41 +42,40 @@ class RTCDataChannelObserver : public webrtc::DataChannelObserver {
   void OnBufferedAmountChange(uint64_t sent_data_size) {}
 
  private:
-  void *rust_observer_;
+  RustRTCDataChannelObserver *rust_observer_;
   webrtc::DataChannelInterface *data_channel_;
-  std::function<void(void *, int)> on_state_change_;
-  std::function<void(void *, internal::DataBuffer)> on_message_;
+  std::function<void(RustRTCDataChannelObserver *, webrtc::DataChannelInterface::DataState)> on_state_change_;
+  std::function<void(RustRTCDataChannelObserver *, internal::DataBuffer)> on_message_;
 };
 
-WEBRTC_RS_EXPORT void webrtc_rs_release_data_channel(void *dc_ptr) {
-  reinterpret_cast<webrtc::DataChannelInterface *>(dc_ptr)->Release();
+WEBRTC_RS_EXPORT void webrtc_rs_release_data_channel(webrtc::DataChannelInterface *dc) {
+  dc->Release();
 }
 
-WEBRTC_RS_EXPORT void *webrtc_rs_data_channel_register_observer(void *dc_ptr, void *rust_observer, void(*on_state_change)(void *, int), void(*on_message)(void *, internal::DataBuffer)) {
-  auto dc = reinterpret_cast<webrtc::DataChannelInterface *>(dc_ptr);
+WEBRTC_RS_EXPORT RTCDataChannelObserver *webrtc_rs_data_channel_register_observer(
+    webrtc::DataChannelInterface *dc,
+    RustRTCDataChannelObserver *rust_observer,
+    void(*on_state_change)(RustRTCDataChannelObserver *, webrtc::DataChannelInterface::DataState),
+    void(*on_message)(RustRTCDataChannelObserver *, internal::DataBuffer)) {
   auto observer = new RTCDataChannelObserver(rust_observer, dc, on_state_change, on_message);
   dc->RegisterObserver(observer);
   return observer;
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_data_channel_unregister_observer(void *dc_ptr, void *ob_ptr) {
-  auto dc = reinterpret_cast<webrtc::DataChannelInterface *>(dc_ptr);
+WEBRTC_RS_EXPORT void webrtc_rs_data_channel_unregister_observer(webrtc::DataChannelInterface *dc, RTCDataChannelObserver *ob_ptr) {
   dc->UnregisterObserver();
   delete ob_ptr;
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_data_channel_send(void *dc_ptr, internal::DataBuffer buf) {
-  auto dc = reinterpret_cast<webrtc::DataChannelInterface *>(dc_ptr);
+WEBRTC_RS_EXPORT void webrtc_rs_data_channel_send(webrtc::DataChannelInterface *dc, internal::DataBuffer buf) {
   dc->Send(buf);
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_data_channel_close(void *dc_ptr) {
-  auto dc = reinterpret_cast<webrtc::DataChannelInterface *>(dc_ptr);
+WEBRTC_RS_EXPORT void webrtc_rs_data_channel_close(webrtc::DataChannelInterface *dc) {
   dc->Close();
 }
 
-WEBRTC_RS_EXPORT int webrtc_rs_data_channel_get_ready_state(void *dc_ptr) {
-  auto dc = reinterpret_cast<webrtc::DataChannelInterface *>(dc_ptr);
+WEBRTC_RS_EXPORT int webrtc_rs_data_channel_get_ready_state(webrtc::DataChannelInterface *dc) {
   return static_cast<int>(dc->state());
 }
 

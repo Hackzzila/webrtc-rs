@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Debug, Clone)]
-#[repr(i32)]
+#[repr(C)]
 pub enum RTCIceTransportPolicy {
   None,
   Relay,
@@ -10,7 +10,7 @@ pub enum RTCIceTransportPolicy {
 }
 
 #[derive(Debug, Clone)]
-#[repr(i32)]
+#[repr(C)]
 pub enum RTCBundlePolicy {
   Balanced,
   MaxBundle,
@@ -18,7 +18,7 @@ pub enum RTCBundlePolicy {
 }
 
 #[derive(Debug, Clone)]
-#[repr(i32)]
+#[repr(C)]
 pub enum RTCRtcpMuxPolicy {
   Negotiate,
   Require,

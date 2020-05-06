@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-#[repr(i32)]
+#[repr(C)]
 pub enum RTCDataChannelState {
   Connecting,
   Open,

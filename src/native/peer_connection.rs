@@ -29,26 +29,28 @@ unsafe extern fn set_session_description_observer_failure(sender: SetSessionDesc
   boxed.send(Err(CStr::from_ptr(err).to_str().unwrap().to_string())).expect("oneshot receiver dropped");
 }
 
+#[repr(C)] pub(crate) struct RTCPeerConnectionInterfaceC { _private: [u8; 0] }
+
 #[link(name = "webrtc-rs")]
 extern {
-  fn webrtc_rs_release_peer_connection(peer: *mut c_void);
+  fn webrtc_rs_release_peer_connection(peer: *mut RTCPeerConnectionInterfaceC);
 
   fn webrtc_rs_peer_connection_create_offer(
-    peer: *mut c_void,
+    peer: *mut RTCPeerConnectionInterfaceC,
     sender: CreateSessionDescriptionObserverSender,
     success: unsafe extern fn(CreateSessionDescriptionObserverSender, internal::RTCSessionDescription),
     error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char)
   );
 
   fn webrtc_rs_peer_connection_create_answer(
-    peer: *mut c_void,
+    peer: *mut RTCPeerConnectionInterfaceC,
     sender: CreateSessionDescriptionObserverSender,
     success: unsafe extern fn(CreateSessionDescriptionObserverSender, internal::RTCSessionDescription),
     error: unsafe extern fn(CreateSessionDescriptionObserverSender, *const c_char)
   );
 
   fn webrtc_rs_peer_connection_set_local_description(
-    peer: *mut c_void,
+    peer: *mut RTCPeerConnectionInterfaceC,
     desc: *mut internal::RTCSessionDescription,
     sender: SetSessionDescriptionObserverSender,
     success: unsafe extern fn(SetSessionDescriptionObserverSender),
@@ -56,7 +58,7 @@ extern {
   );
 
   fn webrtc_rs_peer_connection_set_remote_description(
-    peer: *mut c_void,
+    peer: *mut RTCPeerConnectionInterfaceC,
     desc: *mut internal::RTCSessionDescription,
     sender: SetSessionDescriptionObserverSender,
     success: unsafe extern fn(SetSessionDescriptionObserverSender),
@@ -64,18 +66,18 @@ extern {
   );
 
   fn webrtc_rs_peer_connection_create_data_channel(
-    peer: *mut c_void,
+    peer: *mut RTCPeerConnectionInterfaceC,
     label: *const c_char,
-  ) -> *mut c_void;
+  ) -> *mut RTCDataChannelInterfaceC;
 
   fn webrtc_rs_peer_connection_add_ice_candidate(
-    peer: *mut c_void,
+    peer: *mut RTCPeerConnectionInterfaceC,
     candidate: *mut internal::RTCIceCandidateInit,
   ) -> *mut internal::SdpParseError;
 }
 
 pub struct RTCPeerConnection<'a> {
-  pub(crate) ptr: *mut c_void,
+  pub(crate) ptr: *mut RTCPeerConnectionInterfaceC,
   pub(crate) observer_ptr: *mut Box<&'a dyn RTCPeerConnectionObserver>,
 }
 
@@ -197,24 +199,15 @@ impl<'a> RTCPeerConnection<'a> {
     }
 
     if err != std::ptr::null_mut() {
-      let line = unsafe {
-        let len = libc::strlen((*err).line);
-        std::slice::from_raw_parts_mut((*err).line as *mut u8, len)
-      };
-      let line = std::str::from_utf8_mut(line).unwrap();
-
-      let description = unsafe {
-        let len = libc::strlen((*err).description);
-        std::slice::from_raw_parts_mut((*err).description as *mut u8, len)
-      };
-      let description = std::str::from_utf8_mut(description).unwrap();
-
       unsafe {
-        internal::delete((*err).line as *mut c_void);
-        internal::delete((*err).description as *mut c_void);
-      }
+        internal::free((*err).line as *mut c_void);
+        internal::free((*err).description as *mut c_void);
 
-      Err(SdpParseError { line: line.to_string(), description: description.to_string() })
+        Err(SdpParseError {
+          line: CStr::from_ptr((*err).line).to_str().unwrap().to_string(),
+          description: CStr::from_ptr((*err).description).to_str().unwrap().to_string()
+        })
+      }
     } else {
       Ok(())
     }

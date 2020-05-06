@@ -1,8 +1,10 @@
 use libc::c_char;
 
-#[derive(Debug, Copy, Clone)]
+use crate::*;
+
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct RTCSessionDescription {
-  pub r#type: i32,
+  pub r#type: RTCSdpType,
   pub sdp: *mut c_char,
 }

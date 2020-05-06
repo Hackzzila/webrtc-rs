@@ -1,11 +1,9 @@
-use libc::{c_void};
-
 use crate::*;
 use crate::internal::FromWithCleanupVec;
 
-unsafe extern fn data_channel_observer_on_state_change(ob: *mut Box<dyn RTCDataChannelObserver>, state_num: i32) {
+unsafe extern fn data_channel_observer_on_state_change(ob: *mut Box<dyn RTCDataChannelObserver>, state: RTCDataChannelState) {
   let observer = Box::from_raw(ob);
-  match RTCDataChannelState::from(state_num) {
+  match state {
     RTCDataChannelState::Open => observer.on_open(),
     RTCDataChannelState::Closing => observer.on_closing(),
     RTCDataChannelState::Closed => observer.on_close(),
@@ -20,28 +18,31 @@ unsafe extern fn data_channel_observer_on_message(ob: *mut Box<dyn RTCDataChanne
   Box::into_raw(observer);
 }
 
+#[repr(C)] pub(crate) struct RTCDataChannelInterfaceC { _private: [u8; 0] }
+#[repr(C)] pub(crate) struct RTCDataChannelObserverC { _private: [u8; 0] }
+
 #[link(name = "webrtc-rs")]
 extern {
-  fn webrtc_rs_release_data_channel(dc: *mut c_void);
+  fn webrtc_rs_release_data_channel(dc: *mut RTCDataChannelInterfaceC);
 
   fn webrtc_rs_data_channel_register_observer(
-    dc: *mut c_void,
+    dc: *mut RTCDataChannelInterfaceC,
     ob: *mut Box<dyn RTCDataChannelObserver>,
-    on_state_change: unsafe extern fn(*mut Box<dyn RTCDataChannelObserver>, i32),
+    on_state_change: unsafe extern fn(*mut Box<dyn RTCDataChannelObserver>, RTCDataChannelState),
     on_message: unsafe extern fn(*mut Box<dyn RTCDataChannelObserver>, internal::DataBuffer),
-  ) -> *mut c_void;
-  fn webrtc_rs_data_channel_unregister_observer(dc: *mut c_void, cob: *mut c_void);
+  ) -> *mut RTCDataChannelObserverC;
+  fn webrtc_rs_data_channel_unregister_observer(dc: *mut RTCDataChannelInterfaceC, ob: *mut RTCDataChannelObserverC);
 
-  fn webrtc_rs_data_channel_send(dc: *mut c_void, msg: internal::DataBuffer);
-  fn webrtc_rs_data_channel_close(dc: *mut c_void);
+  fn webrtc_rs_data_channel_send(dc: *mut RTCDataChannelInterfaceC, msg: internal::DataBuffer);
+  fn webrtc_rs_data_channel_close(dc: *mut RTCDataChannelInterfaceC);
 
-  fn webrtc_rs_data_channel_get_ready_state(dc: *mut c_void) -> i32;
+  fn webrtc_rs_data_channel_get_ready_state(dc: *mut RTCDataChannelInterfaceC) -> RTCDataChannelState;
 }
 
 pub struct RTCDataChannel {
-  pub(crate) ptr: *mut c_void,
+  pub(crate) ptr: *mut RTCDataChannelInterfaceC,
   pub(crate) observer_ptr: Option<*mut Box<dyn RTCDataChannelObserver>>,
-  pub(crate) c_observer_ptr: *mut c_void,
+  pub(crate) c_observer_ptr: *mut RTCDataChannelObserverC,
 }
 
 impl RTCDataChannel {
@@ -83,7 +84,9 @@ impl RTCDataChannel {
   }
 
   pub fn get_ready_state(&self) -> RTCDataChannelState {
-    RTCDataChannelState::from(unsafe { webrtc_rs_data_channel_get_ready_state(self.ptr) })
+    unsafe {
+      webrtc_rs_data_channel_get_ready_state(self.ptr)
+    }
   }
 }
 

@@ -12,9 +12,9 @@ namespace internal {
 struct RTCConfiguration {
   RTCIceServer *ice_servers;
   size_t ice_servers_len;
-  int *ice_transport_policy;
-  int *bundle_policy;
-  int *rtcp_mux_policy;
+  webrtc::PeerConnectionInterface::IceTransportsType *ice_transport_policy;
+  webrtc::PeerConnectionInterface::BundlePolicy *bundle_policy;
+  webrtc::PeerConnectionInterface::RtcpMuxPolicy *rtcp_mux_policy;
   uint16_t *ice_candidate_pool_size;
 
   operator webrtc::PeerConnectionInterface::RTCConfiguration() const {
@@ -26,15 +26,15 @@ struct RTCConfiguration {
     }
 
     if (this->ice_transport_policy) {
-      config.type = static_cast<webrtc::PeerConnectionInterface::IceTransportsType>(*this->ice_transport_policy);
+      config.type = *this->ice_transport_policy;
     }
 
     if (this->bundle_policy) {
-      config.bundle_policy = static_cast<webrtc::PeerConnectionInterface::BundlePolicy>(*this->bundle_policy);
+      config.bundle_policy = *this->bundle_policy;
     }
 
     if (this->rtcp_mux_policy) {
-      config.rtcp_mux_policy = static_cast<webrtc::PeerConnectionInterface::RtcpMuxPolicy>(*this->rtcp_mux_policy);
+      config.rtcp_mux_policy = *this->rtcp_mux_policy;
     }
 
     if (this->ice_candidate_pool_size) {

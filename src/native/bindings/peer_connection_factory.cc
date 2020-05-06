@@ -10,7 +10,7 @@ extern "C" {
 
 namespace webrtc_rs {
 
-WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection_factory() {
+WEBRTC_RS_EXPORT webrtc::PeerConnectionFactoryInterface *webrtc_rs_create_peer_connection_factory() {
   // auto network_thread = rtc::Thread::CreateWithSocketServer().release();
   // network_thread->Start();
 
@@ -33,8 +33,8 @@ WEBRTC_RS_EXPORT void *webrtc_rs_create_peer_connection_factory() {
     nullptr).release();
 }
 
-WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection_factory(void *factory_ptr) {
-  reinterpret_cast<webrtc::PeerConnectionFactoryInterface *>(factory_ptr)->Release();
+WEBRTC_RS_EXPORT void webrtc_rs_release_peer_connection_factory(webrtc::PeerConnectionFactoryInterface *factory) {
+  factory->Release();
 }
 
 };  // namespace webrtc_rs

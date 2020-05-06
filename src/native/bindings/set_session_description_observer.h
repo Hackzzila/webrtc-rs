@@ -8,9 +8,17 @@
 
 namespace webrtc_rs {
 
+struct RustSetSessionDescriptionObserver;
+
 class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserver {
  public:
-  SetSessionDescriptionObserver(void *sender, std::function<void(void *)> success, std::function<void(void *, const char *)> error) : sender_(sender), success_(success), error_(error) { }
+  SetSessionDescriptionObserver(
+    RustSetSessionDescriptionObserver *sender,
+    std::function<void(RustSetSessionDescriptionObserver *)> success,
+    std::function<void(RustSetSessionDescriptionObserver *, const char *)> error)
+    : sender_(sender),
+      success_(success),
+      error_(error) { }
 
   void OnSuccess() override {
     success_(sender_);
@@ -35,9 +43,9 @@ class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserv
 
  private:
   mutable std::atomic<int> ref_count_{0};
-  void *sender_ = nullptr;
-  std::function<void(void *)> success_ = nullptr;
-  std::function<void(void *, const char *)> error_ = nullptr;
+  RustSetSessionDescriptionObserver *sender_ = nullptr;
+  std::function<void(RustSetSessionDescriptionObserver *)> success_ = nullptr;
+  std::function<void(RustSetSessionDescriptionObserver *, const char *)> error_ = nullptr;
 };
 
 };  // namespace webrtc_rs

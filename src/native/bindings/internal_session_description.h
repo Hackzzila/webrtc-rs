@@ -8,17 +8,17 @@ namespace webrtc_rs {
 namespace internal {
 
 struct RTCSessionDescription {
-  int type;
+  webrtc::SdpType type;
   char *sdp;
 
   static RTCSessionDescription From(webrtc::SessionDescriptionInterface *from) {
     RTCSessionDescription desc;
-    desc.type = static_cast<int>(from->GetType());
+    desc.type = from->GetType();
 
     std::string out;
     from->ToString(&out);
 
-    auto str = new char[out.size() + 1];
+    auto str = reinterpret_cast<char *>(malloc(out.size() + 1));
     std::strcpy(str, out.c_str());
 
     desc.sdp = str;
@@ -27,7 +27,7 @@ struct RTCSessionDescription {
   }
 
   operator webrtc::SessionDescriptionInterface *() const {
-    return webrtc::CreateSessionDescription(static_cast<webrtc::SdpType>(type), std::string(sdp)).release();
+    return webrtc::CreateSessionDescription(type, std::string(sdp)).release();
   }
 };
 

@@ -3,7 +3,7 @@ use serde::ser::{Serialize, Serializer};
 use serde::de::{Visitor, Deserializer, Deserialize};
 
 #[derive(Debug, Clone)]
-#[repr(i32)]
+#[repr(C)]
 pub enum RTCSdpType {
   Offer,
   PrAnswer,

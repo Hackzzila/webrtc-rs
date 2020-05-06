@@ -16,15 +16,15 @@ impl internal::FromWithCleanup<RTCConfiguration<'_>> for internal::RTCConfigurat
       ice_servers: internal_ice_servers.as_ptr(),
       ice_servers_len: internal_ice_servers.len(),
       ice_transport_policy: match config.ice_transport_policy {
-        Some(x) => &(x as i32) as *const i32,
+        Some(x) => &x as *const RTCIceTransportPolicy,
         None => std::ptr::null(),
       },
       bundle_policy: match config.bundle_policy {
-        Some(x) => &(x as i32) as *const i32,
+        Some(x) => &x as *const RTCBundlePolicy,
         None => std::ptr::null(),
       },
       rtcp_mux_policy: match config.rtcp_mux_policy {
-        Some(x) => &(x as i32) as *const i32,
+        Some(x) => &x as *const RTCRtcpMuxPolicy,
         None => std::ptr::null(),
       },
       ice_candidate_pool_size: match config.ice_candidate_pool_size {

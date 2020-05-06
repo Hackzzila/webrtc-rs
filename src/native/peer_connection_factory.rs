@@ -1,17 +1,15 @@
-use libc::c_void;
 use std::ffi::CString;
 
 use crate::*;
 use crate::internal::FromWithCleanup;
 
-unsafe extern fn peer_connection_observer_on_signaling_state_change<'a>(ob: *mut Box<&'a dyn RTCPeerConnectionObserver>, state_num: i32) {
+unsafe extern fn peer_connection_observer_on_signaling_state_change<'a>(ob: *mut Box<&'a dyn RTCPeerConnectionObserver>, state: RTCSignalingState) {
   let observer = Box::from_raw(ob);
-  let state = RTCSignalingState::from(state_num);
   observer.on_signaling_state_change(state);
   Box::into_raw(observer);
 }
 
-unsafe extern fn peer_connection_observer_on_data_channel<'a>(ob: *mut Box<&'a dyn RTCPeerConnectionObserver>, ptr: *mut c_void) {
+unsafe extern fn peer_connection_observer_on_data_channel<'a>(ob: *mut Box<&'a dyn RTCPeerConnectionObserver>, ptr: *mut RTCDataChannelInterfaceC) {
   let observer = Box::from_raw(ob);
   observer.on_data_channel(RTCDataChannel { ptr, observer_ptr: None, c_observer_ptr: std::ptr::null_mut() });
   Box::into_raw(observer);
@@ -23,23 +21,25 @@ unsafe extern fn peer_connection_observer_on_ice_candidate<'a>(ob: *mut Box<&'a 
   Box::into_raw(observer);
 }
 
+#[repr(C)] pub(crate) struct RTCPeerConnectionFactoryInterfaceC { _private: [u8; 0] }
+
 #[link(name = "webrtc-rs")]
 extern {
-  fn webrtc_rs_create_peer_connection_factory() -> *mut c_void;
-  fn webrtc_rs_release_peer_connection_factory(factory: *mut c_void);
+  fn webrtc_rs_create_peer_connection_factory() -> *mut RTCPeerConnectionFactoryInterfaceC;
+  fn webrtc_rs_release_peer_connection_factory(factory: *mut RTCPeerConnectionFactoryInterfaceC);
 
   fn webrtc_rs_create_peer_connection<'a>(
-    factory: *mut c_void,
+    factory: *mut RTCPeerConnectionFactoryInterfaceC,
     config: *const internal::RTCConfiguration,
     observer: *mut Box<&'a dyn RTCPeerConnectionObserver>,
-    on_signaling_change: unsafe extern fn(*mut Box<&'a dyn RTCPeerConnectionObserver>, i32),
-    on_data_channel: unsafe extern fn(*mut Box<&'a dyn RTCPeerConnectionObserver>, *mut c_void),
+    on_signaling_change: unsafe extern fn(*mut Box<&'a dyn RTCPeerConnectionObserver>, RTCSignalingState),
+    on_data_channel: unsafe extern fn(*mut Box<&'a dyn RTCPeerConnectionObserver>, *mut RTCDataChannelInterfaceC),
     on_ice_candidate: unsafe extern fn(*mut Box<&'a dyn RTCPeerConnectionObserver>, internal::RTCIceCandidateInit),
-  ) -> *mut c_void;
+  ) -> *mut RTCPeerConnectionInterfaceC;
 }
 
 pub struct RTCPeerConnectionFactory {
-  ptr: *mut c_void,
+  ptr: *mut RTCPeerConnectionFactoryInterfaceC,
 }
 
 impl RTCPeerConnectionFactory {

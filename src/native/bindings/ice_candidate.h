@@ -14,12 +14,12 @@ struct SdpParseError {
   static SdpParseError *From(webrtc::SdpParseError *from) {
     if (!from) return nullptr;
 
-    auto err = new SdpParseError;
+    auto err = reinterpret_cast<SdpParseError *>(malloc(sizeof(SdpParseError)));
     
-    err->line = new char[from->line.size() + 1];
+    err->line = reinterpret_cast<char *>(malloc(from->line.size() + 1));
     std::strcpy(err->line, from->line.c_str());
     
-    err->description = new char[from->description.size() + 1];
+    err->description = reinterpret_cast<char *>(malloc(from->description.size() + 1));
     std::strcpy(err->description, from->description.c_str());
 
     return err;
@@ -43,13 +43,13 @@ struct RTCIceCandidateInit {
     RTCIceCandidateInit candidate;
     candidate.sdp_mline_index = from->sdp_mline_index();
 
-    candidate.sdp_mid = new char[from->sdp_mid().size() + 1];
+    candidate.sdp_mid = reinterpret_cast<char *>(malloc(from->sdp_mid().size() + 1));
     std::strcpy(candidate.sdp_mid, from->sdp_mid().c_str());
 
     std::string out;
     from->ToString(&out);
 
-    auto str = new char[out.size() + 1];
+    auto str = reinterpret_cast<char *>(malloc(out.size() + 1));
     std::strcpy(str, out.c_str());
 
     candidate.candidate = str;
